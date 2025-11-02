@@ -196,13 +196,15 @@
     <div class="chat-shell">
         <div id="chatBox" data-last-id="${mensajes != null && mensajes.size() > 0 ? mensajes.get(mensajes.size() - 1).id : 0}">
             #{list items:mensajes, as:'m'}
-                <div class="bubble ${m.emisor.id == yo.id ? 'mine' : 'other'}" data-id="${m.id}">
-                    <div class="meta">
-                        <span>${m.emisor.username}</span>
-                        <time>${new java.text.SimpleDateFormat("dd/MM HH:mm").format(m.fecha)}</time>
+                #{if m && m.emisor}
+                    <div class="bubble ${m.emisor != null && m.emisor.id == yo.id ? 'mine' : 'other'}" data-id="${m.id}">
+                        <div class="meta">
+                            <span>${m.emisor.username}</span>
+                            <time>${m.fecha != null ? new java.text.SimpleDateFormat("dd/MM HH:mm").format(m.fecha) : ""}</time>
+                        </div>
+                        <p>${m.contenido != null ? m.contenido : ""}</p>
                     </div>
-                    <p>${m.contenido}</p>
-                </div>
+                #{/if}
             #{/list}
         </div>
 

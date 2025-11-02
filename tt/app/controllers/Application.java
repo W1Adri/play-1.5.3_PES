@@ -14,6 +14,7 @@ public class Application extends Controller {
         if (session.get("username") == null) {
             flash.error("Por favor, inicia sesión.");
             index();
+            return;
         }
     }
 
@@ -21,8 +22,16 @@ public class Application extends Controller {
     public static void index() {
         if (session.get("username") != null) {
             Usuario u = connected();
-            if (u.rol == Rol.ALUMNO) panelAlumno();
-            if (u.rol == Rol.PROFESOR) panelProfesor();
+            if (u == null) {
+                session.clear();
+                flash.error("Tu sesión ha expirado, inicia sesión nuevamente.");
+            } else if (u.rol == Rol.ALUMNO) {
+                panelAlumno();
+                return;
+            } else if (u.rol == Rol.PROFESOR) {
+                panelProfesor();
+                return;
+            }
         }
         render("Application/index.html");
     }
@@ -92,6 +101,12 @@ public class Application extends Controller {
     // --- PANEL ALUMNO ---
     public static void panelAlumno() {
         Usuario u = connected();
+        if (u == null) {
+            session.clear();
+            flash.error("Debes iniciar sesión nuevamente.");
+            index();
+            return;
+        }
         if (u.rol != Rol.ALUMNO) {
             flash.error("Acceso no autorizado.");
             logout();
@@ -102,30 +117,52 @@ public class Application extends Controller {
         List<Inscripcion> registros = Inscripcion.find("byAlumno", u).fetch();
         Map<Long, Usuario> profesorPorMateria = new HashMap<Long, Usuario>();
 
+        long totalUsuarios = Usuario.count();
+        long totalAlumnos = Usuario.count("rol = ?1", Rol.ALUMNO);
+        long totalProfesores = Usuario.count("rol = ?1", Rol.PROFESOR);
+
         for (Inscripcion i : registros) {
             inscripciones.add(i.materia);
             profesorPorMateria.put(i.materia.id, i.profesor);
         }
 
         List<Usuario> profesores = Usuario.find("byRol", Rol.PROFESOR).fetch();
-        renderTemplate("Application/panelAlumno.html", u, materias, inscripciones, profesores, profesorPorMateria);
+        renderTemplate("Application/panelAlumno.html", u, materias, inscripciones, profesores, profesorPorMateria,
+                totalUsuarios, totalAlumnos, totalProfesores);
     }
 
     // --- PANEL PROFESOR ---
     public static void panelProfesor() {
         Usuario profesor = connected();
+        if (profesor == null) {
+            session.clear();
+            flash.error("Debes iniciar sesión nuevamente.");
+            index();
+            return;
+        }
         if (profesor.rol != Rol.PROFESOR) {
             flash.error("Acceso no autorizado.");
             logout();
         }
+        long totalUsuarios = Usuario.count();
+        long totalAlumnos = Usuario.count("rol = ?1", Rol.ALUMNO);
+        long totalProfesores = Usuario.count("rol = ?1", Rol.PROFESOR);
         List<Inscripcion> misAlumnos = Inscripcion.find("byProfesor", profesor).fetch();
-        renderTemplate("Application/panelProfesor.html", profesor, misAlumnos);
+        renderTemplate("Application/panelProfesor.html", profesor, misAlumnos,
+                totalUsuarios, totalAlumnos, totalProfesores);
     }
 
     // --- DETALLE DE MATERIA ---
     public static void detalle(Long id) {
         Materia m = Materia.findById(id);
         Usuario u = connected();
+
+        if (u == null) {
+            session.clear();
+            flash.error("Debes iniciar sesión nuevamente.");
+            index();
+            return;
+        }
 
         if (m == null) {
             flash.error("Materia no encontrada");
@@ -171,6 +208,12 @@ public class Application extends Controller {
         if (alumno == null || profesor == null) renderText("Error: usuario no encontrado");
 
         Usuario yo = connected();
+        if (yo == null) {
+            session.clear();
+            flash.error("Debes iniciar sesión nuevamente.");
+            index();
+            return;
+        }
         if (!yo.id.equals(alumno.id) && !yo.id.equals(profesor.id)) {
             flash.error("No tienes permiso para ver este chat.");
             index();
@@ -181,6 +224,14 @@ public class Application extends Controller {
                 alumno, profesor, profesor, alumno
         ).fetch();
 
+        List<Mensaje> mensajesValidos = new ArrayList<Mensaje>();
+        for (Mensaje mensaje : mensajes) {
+            if (mensaje != null && mensaje.emisor != null && mensaje.receptor != null) {
+                mensajesValidos.add(mensaje);
+            }
+        }
+
+        mensajes = mensajesValidos;
         render(alumno, profesor, mensajes, yo);
     }
 
@@ -250,7 +301,9 @@ public class Application extends Controller {
 
         List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
         for (Mensaje mensaje : mensajes) {
-            data.add(toMensajeDto(mensaje));
+            if (mensaje != null && mensaje.emisor != null && mensaje.receptor != null) {
+                data.add(toMensajeDto(mensaje));
+            }
         }
 
         renderJSON(data);

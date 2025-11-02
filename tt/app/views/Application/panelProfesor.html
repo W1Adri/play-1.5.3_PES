@@ -86,9 +86,35 @@
             flex-direction: column;
             gap: 12px;
         }
+        .card.stats {
+            gap: 10px;
+        }
         .card h3 {
             margin: 0;
             color: #704b2f;
+        }
+        .card h2 {
+            margin: 0;
+            color: #704b2f;
+            font-size: 20px;
+        }
+        .stats-grid {
+            display: grid;
+            gap: 12px;
+        }
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: rgba(241, 154, 43, 0.12);
+            color: #704b2f;
+            font-weight: 600;
+        }
+        .stat span {
+            font-size: 22px;
+            color: #8b6242;
         }
         .badge {
             display: inline-flex;
@@ -136,6 +162,14 @@
 </header>
 
 <main>
+    <section class="card stats">
+        <h2>📊 Comunidad</h2>
+        <div class="stats-grid">
+            <div class="stat">Usuarios registrados <span>${totalUsuarios}</span></div>
+            <div class="stat">Alumnos activos <span>${totalAlumnos}</span></div>
+            <div class="stat">Profesores activos <span>${totalProfesores}</span></div>
+        </div>
+    </section>
     <div class="grid">
         #{if misAlumnos && misAlumnos.size() > 0}
             #{list items:misAlumnos, as:'ins'}

@@ -89,6 +89,9 @@
             flex-direction: column;
             gap: 18px;
         }
+        .card.stats {
+            gap: 12px;
+        }
         .card h2 {
             margin: 0;
             color: #244155;
@@ -96,6 +99,24 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+        .stats-grid {
+            display: grid;
+            gap: 12px;
+        }
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: rgba(63, 135, 166, 0.08);
+            color: #1f3b4d;
+            font-weight: 600;
+        }
+        .stat span {
+            font-size: 22px;
+            color: #244155;
         }
         .subject {
             padding: 18px;
@@ -212,6 +233,15 @@
             #{else}
                 <div class="empty">Inscríbete en una materia para ver a tus profesores aquí.</div>
             #{/else}
+        </section>
+
+        <section class="card stats">
+            <h2>📊 Comunidad</h2>
+            <div class="stats-grid">
+                <div class="stat">Usuarios registrados <span>${totalUsuarios}</span></div>
+                <div class="stat">Alumnos activos <span>${totalAlumnos}</span></div>
+                <div class="stat">Profesores activos <span>${totalProfesores}</span></div>
+            </div>
         </section>
     </div>
 </main>
