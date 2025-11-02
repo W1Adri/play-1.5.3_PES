@@ -32,9 +32,11 @@ public class Application extends Controller {
         if (username == null || username.trim().isEmpty()) renderText("El nombre de usuario no puede estar vacío.");
         if (password == null || password.trim().isEmpty()) renderText("La contraseña no puede estar vacía.");
         if (email == null || email.trim().isEmpty()) renderText("El email no puede estar vacío.");
+        if (fullName == null || fullName.trim().isEmpty()) renderText("El nombre completo no puede estar vacío.");
 
         username = username.trim().toLowerCase();
         email = email.trim().toLowerCase();
+        fullName = fullName.trim();
 
         Rol rolEnum;
         if ("alumno".equalsIgnoreCase(rol)) {
@@ -213,20 +215,11 @@ public class Application extends Controller {
         Mensaje nuevo = new Mensaje(emisor, receptor, contenido.trim());
         nuevo.save();
 
-        Map<String, Object> emisorDto = new HashMap<String, Object>();
-        emisorDto.put("id", emisor.id);
-        emisorDto.put("username", emisor.username);
-
-        Map<String, Object> resp = new HashMap<String, Object>();
-        resp.put("emisor", emisorDto);
-        resp.put("contenido", nuevo.contenido);
-        resp.put("fecha", nuevo.fecha);
-
-        renderJSON(resp);
+        renderJSON(toMensajeDto(nuevo));
     }
 
     // --- OBTENER MENSAJES (API) ---
-    public static void obtenerMensajes(Long alumnoId, Long profesorId) {
+    public static void obtenerMensajes(Long alumnoId, Long profesorId, Long lastId) {
         Usuario alumno = Usuario.findById(alumnoId);
         Usuario profesor = Usuario.findById(profesorId);
 
@@ -243,13 +236,24 @@ public class Application extends Controller {
             return;
         }
 
-        List<Mensaje> mensajes = Mensaje.find(
-                "((emisor = ?1 AND receptor = ?2) OR (emisor = ?3 AND receptor = ?4)) " +
-                        "ORDER BY fecha ASC",
-                alumno, profesor, profesor, alumno
-        ).fetch();
+        String baseQuery = "((emisor = ?1 AND receptor = ?2) OR (emisor = ?3 AND receptor = ?4))";
+        List<Mensaje> mensajes;
+        if (lastId != null) {
+            mensajes = Mensaje.find(baseQuery + " AND id > ?5 ORDER BY fecha ASC",
+                    alumno, profesor, profesor, alumno, lastId
+            ).fetch();
+        } else {
+            mensajes = Mensaje.find(baseQuery + " ORDER BY fecha ASC",
+                    alumno, profesor, profesor, alumno
+            ).fetch();
+        }
 
-        renderJSON(mensajes);
+        List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
+        for (Mensaje mensaje : mensajes) {
+            data.add(toMensajeDto(mensaje));
+        }
+
+        renderJSON(data);
     }
 
     // --- LOGOUT ---
@@ -257,5 +261,19 @@ public class Application extends Controller {
         session.clear();
         flash.success("Has cerrado sesión correctamente.");
         index();
+    }
+
+    private static Map<String, Object> toMensajeDto(Mensaje mensaje) {
+        Map<String, Object> emisorDto = new HashMap<String, Object>();
+        emisorDto.put("id", mensaje.emisor.id);
+        emisorDto.put("username", mensaje.emisor.username);
+
+        Map<String, Object> resp = new HashMap<String, Object>();
+        resp.put("id", mensaje.id);
+        resp.put("emisor", emisorDto);
+        resp.put("contenido", mensaje.contenido);
+        resp.put("fecha", mensaje.fecha);
+
+        return resp;
     }
 }

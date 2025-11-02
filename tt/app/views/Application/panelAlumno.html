@@ -4,61 +4,216 @@
     <meta charset="UTF-8">
     <title>Panel del Alumno</title>
     <style>
+        :root {
+            color-scheme: light;
+        }
         body {
             font-family: "Segoe UI", sans-serif;
-            background: linear-gradient(135deg, #74ebd5, #acb6e5);
+            background: radial-gradient(circle at top left, #79c2ff 0%, #f6f9ff 45%, #dff6f0 100%);
             margin: 0;
-            padding: 30px;
+            min-height: 100vh;
         }
-        .materia {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-            margin-bottom: 15px;
+        .top-bar {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.82);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 6px 20px rgba(15, 37, 88, 0.08);
         }
-        button {
-            background: #3f87a6;
+        .brand {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .brand strong {
+            font-size: 20px;
+            color: #244155;
+            letter-spacing: .02em;
+        }
+        .brand span {
+            font-size: 14px;
+            color: #4f6b80;
+        }
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 16px;
+            border-radius: 999px;
             border: none;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform .2s ease, box-shadow .2s ease;
             color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 5px;
+            background: linear-gradient(135deg, #3f87a6, #266d8e);
+            box-shadow: 0 4px 12px rgba(63, 135, 166, 0.35);
         }
-        button:hover { background: #2d6c8a; }
-        h1 { text-align: center; color: #2c3e50; }
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid rgba(63, 135, 166, 0.4);
+            color: #2f5670;
+            box-shadow: none;
+        }
+        .btn.logout {
+            background: linear-gradient(135deg, #ff6b6b, #d1456b);
+            box-shadow: 0 4px 12px rgba(209, 69, 107, 0.35);
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+        main {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 24px 60px;
+        }
+        .layout {
+            display: grid;
+            gap: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 20px;
+            padding: 26px;
+            box-shadow: 0 20px 45px rgba(36, 65, 85, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .card h2 {
+            margin: 0;
+            color: #244155;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .subject {
+            padding: 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(63, 135, 166, 0.12);
+            background: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 4px 14px rgba(15, 37, 88, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .subject h3 {
+            margin: 0;
+            color: #1f3b4d;
+        }
+        .subject p {
+            margin: 0;
+            color: #547086;
+            line-height: 1.4;
+        }
+        .subject .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            color: #2f5670;
+        }
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(63, 135, 166, 0.12);
+            color: #2f5670;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .empty {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px dashed rgba(47, 86, 112, 0.35);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            color: #52748c;
+            font-size: 15px;
+        }
+        @media (max-width: 640px) {
+            .top-bar {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+            .actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
     </style>
 </head>
 <body>
-<h1>🎓 Bienvenido ${u.fullName}</h1>
+<header class="top-bar">
+    <div class="brand">
+        <strong>Clases online</strong>
+        <span>Hola, ${u.fullName}</span>
+    </div>
+    <div class="actions">
+        <a class="btn secondary" href="@{Application.panelAlumno()}">Panel principal</a>
+        <a class="btn logout" href="@{Application.logout()}">Cerrar sesión</a>
+    </div>
+</header>
 
-<h2>Materias disponibles</h2>
-#{list items:materias, as:'m'}
-<div class="materia">
-    <h3>${m.nombre}</h3>
-    <p>${m.descripcion}</p>
-    <a href="@{Application.detalle(m.id)}">Ver detalles</a>
-</div>
-#{/list}
+<main>
+    <div class="layout">
+        <section class="card">
+            <h2>📚 Materias disponibles</h2>
+            #{if materias && materias.size() > 0}
+                #{list items:materias, as:'m'}
+                    <article class="subject">
+                        <h3>${m.nombre}</h3>
+                        <p>${m.descripcion}</p>
+                        <div class="meta">
+                            <span class="tag">Código: ${m.codigo}</span>
+                            <a class="btn secondary" href="@{Application.detalle(m.id)}">Ver detalles</a>
+                        </div>
+                    </article>
+                #{/list}
+            #{/if}
+            #{else}
+                <div class="empty">Todavía no hay materias disponibles.</div>
+            #{/else}
+        </section>
 
-<h2>📚 Tus inscripciones</h2>
-#{list items:inscripciones, as:'m'}
-<div class="materia">
-    <b>${m.nombre}</b>
-    <p>
-        Profesor asignado:
-        #{if profesorPorMateria.get(m.id) != null}
-        ${profesorPorMateria.get(m.id).fullName}
-        <a href="@{Application.chat(u.id, profesorPorMateria.get(m.id).id)}">
-            💬 Chatear con ${profesorPorMateria.get(m.id).username}
-        </a>
-    #{/if}
-    #{else}
-    <i>No tienes profesor asignado aún</i>
-    #{/else}
-    </p>
-</div>
-#{/list}
+        <section class="card">
+            <h2>🎓 Tus inscripciones</h2>
+            #{if inscripciones && inscripciones.size() > 0}
+                #{list items:inscripciones, as:'m'}
+                    <article class="subject">
+                        <h3>${m.nombre}</h3>
+                        #{if profesorPorMateria.get(m.id) != null}
+                            <div class="meta">
+                                <span class="tag">Profesor: ${profesorPorMateria.get(m.id).fullName}</span>
+                                <a class="btn" href="@{Application.chat(u.id, profesorPorMateria.get(m.id).id)}">
+                                    💬 Abrir chat
+                                </a>
+                            </div>
+                        #{/if}
+                        #{else}
+                            <p class="meta">Aún no tienes un profesor asignado.</p>
+                        #{/else}
+                    </article>
+                #{/list}
+            #{/if}
+            #{else}
+                <div class="empty">Inscríbete en una materia para ver a tus profesores aquí.</div>
+            #{/else}
+        </section>
+    </div>
+</main>
 </body>
 </html>
