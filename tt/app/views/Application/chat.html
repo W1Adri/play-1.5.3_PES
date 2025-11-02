@@ -4,146 +4,326 @@
     <meta charset="UTF-8">
     <title>Chat entre ${alumno.username} y ${profesor.username}</title>
     <style>
+        :root { color-scheme: light; }
         body {
             font-family: "Segoe UI", sans-serif;
-            background: linear-gradient(135deg, #74ebd5, #acb6e5);
             margin: 0;
-            height: 100vh;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #eff6ff 0%, #f2fbf9 45%, #fff7f5 100%);
             display: flex;
             flex-direction: column;
         }
-
-        h2 {
-            text-align: center;
-            color: #2c3e50;
-            margin-top: 20px;
+        .top-bar {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            box-shadow: 0 8px 25px rgba(47, 86, 112, 0.12);
         }
-
+        .participants {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .back {
+            text-decoration: none;
+            color: #2f5670;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(47, 86, 112, 0.2);
+            background: rgba(255, 255, 255, 0.7);
+        }
+        .names {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .names strong {
+            font-size: 18px;
+            color: #214056;
+        }
+        .names span {
+            color: #4f6b80;
+            font-size: 14px;
+        }
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 16px;
+            border-radius: 999px;
+            border: none;
+            font-weight: 600;
+            text-decoration: none;
+            color: white;
+            background: linear-gradient(135deg, #ff6b6b, #d1456b);
+            box-shadow: 0 4px 12px rgba(209, 69, 107, 0.35);
+        }
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px 32px;
+        }
+        .chat-shell {
+            flex: 1;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
         #chatBox {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
-        }
-
-        .msg {
-            padding: 10px;
-            border-radius: 8px;
-            margin: 5px;
-            max-width: 70%;
-            clear: both;
-        }
-
-        .emisor {
-            background-color: #dcf8c6;
-            float: right;
-        }
-
-        .receptor {
-            background-color: #f1f0f0;
-            float: left;
-        }
-
-        #formMensaje {
+            padding: 28px;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 24px;
+            box-shadow: inset 0 0 0 1px rgba(47, 86, 112, 0.08);
             display: flex;
-            padding: 10px;
-            background: white;
+            flex-direction: column;
+            gap: 16px;
         }
-
+        .bubble {
+            max-width: 70%;
+            padding: 14px 18px;
+            border-radius: 18px 18px 4px 18px;
+            background: linear-gradient(135deg, #3f87a6, #266d8e);
+            color: white;
+            align-self: flex-end;
+            box-shadow: 0 8px 18px rgba(63, 135, 166, 0.25);
+        }
+        .bubble.other {
+            align-self: flex-start;
+            background: rgba(47, 86, 112, 0.08);
+            color: #2f5670;
+            border-radius: 18px 18px 18px 4px;
+            box-shadow: 0 8px 18px rgba(47, 86, 112, 0.1);
+        }
+        .bubble .meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 6px;
+        }
+        .bubble p {
+            margin: 0;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        form#formMensaje {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 999px;
+            padding: 10px 16px;
+            box-shadow: 0 20px 40px rgba(47, 86, 112, 0.16);
+        }
         #mensaje {
             flex: 1;
-            padding: 8px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-        }
-
-        button {
-            background: #3f87a6;
-            color: white;
             border: none;
-            padding: 10px 15px;
-            margin-left: 10px;
-            border-radius: 8px;
+            padding: 12px;
+            border-radius: 999px;
+            background: rgba(47, 86, 112, 0.08);
+            font-size: 15px;
+            font-family: inherit;
+        }
+        #mensaje:focus {
+            outline: none;
+            background: rgba(47, 86, 112, 0.14);
+        }
+        form#formMensaje button {
+            border: none;
+            border-radius: 999px;
+            padding: 12px 20px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #3f87a6, #266d8e);
             cursor: pointer;
+            box-shadow: 0 8px 18px rgba(63, 135, 166, 0.35);
+        }
+        form#formMensaje button:hover { transform: translateY(-1px); }
+        @media (max-width: 720px) {
+            .top-bar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .participants { width: 100%; justify-content: space-between; }
+            .actions { width: 100%; justify-content: flex-end; }
+            .bubble { max-width: 90%; }
         }
     </style>
 </head>
-<body>
-
-<h2>💬 Chat entre ${alumno.username} y ${profesor.username}</h2>
-
-<div id="chatBox">
-    #{list items:mensajes, as:'m'}
-    <div class="msg ${m.emisor.id == yo.id ? 'emisor' : 'receptor'}">
-        <b>${m.emisor.username}:</b> ${m.contenido}
+<body data-yo="${yo.id}" data-alumno="${alumno.id}" data-profesor="${profesor.id}">
+<header class="top-bar">
+    <div class="participants">
+        #{if yo.id == alumno.id}
+            <a class="back" href="@{Application.panelAlumno()}">← Volver</a>
+        #{/if}
+        #{else}
+            <a class="back" href="@{Application.panelProfesor()}">← Volver</a>
+        #{/else}
+        <div class="names">
+            <strong>${alumno.fullName} · ${profesor.fullName}</strong>
+            <span>Conversación con ${yo.id == alumno.id ? profesor.username : alumno.username}</span>
+        </div>
     </div>
-    #{/list}
-</div>
+    <div class="actions">
+        <a class="btn" href="@{Application.logout()}">Cerrar sesión</a>
+    </div>
+</header>
 
-<form id="formMensaje" onsubmit="return enviarMensaje(event)">
-    <!-- ID del usuario conectado -->
-    <input type="hidden" id="emisorId" value="${yo.id}">
-    #{if yo.id == alumno.id}
-    <input type="hidden" id="receptorId" value="${profesor.id}">
-    #{/if}
-    #{else}
-    <input type="hidden" id="receptorId" value="${alumno.id}">
-    #{/else}
+<main>
+    <div class="chat-shell">
+        <div id="chatBox" data-last-id="${mensajes != null && mensajes.size() > 0 ? mensajes.get(mensajes.size() - 1).id : 0}">
+            #{list items:mensajes, as:'m'}
+                #{if m && m.emisor}
+                    <div class="bubble ${m.emisor != null && m.emisor.id == yo.id ? 'mine' : 'other'}" data-id="${m.id}">
+                        <div class="meta">
+                            <span>${m.emisor.username}</span>
+                            <time>${m.fecha != null ? new java.text.SimpleDateFormat("dd/MM HH:mm").format(m.fecha) : ""}</time>
+                        </div>
+                        <p>${m.contenido != null ? m.contenido : ""}</p>
+                    </div>
+                #{/if}
+            #{/list}
+        </div>
 
-    <input type="text" id="mensaje" placeholder="Escribe un mensaje..." autocomplete="off" required>
-    <button type="submit">Enviar</button>
-</form>
+        <form id="formMensaje" onsubmit="return enviarMensaje(event)">
+            <input type="hidden" id="receptorId" value="${yo.id == alumno.id ? profesor.id : alumno.id}">
+            <input type="text" id="mensaje" placeholder="Escribe un mensaje..." autocomplete="off" required>
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
+</main>
 
 <script>
-    async function enviarMensaje(e) {
-      e.preventDefault();
-      const contenido = document.getElementById("mensaje").value.trim();
-      if (!contenido) return;
+    const chatBox = document.getElementById("chatBox");
+    const mensajeInput = document.getElementById("mensaje");
+    const receptorId = document.getElementById("receptorId").value;
+    const yoId = document.body.dataset.yo;
+    const enviarUrl = "@{Application.enviarMensaje}";
+    const mensajesUrlBase = "@{Application.obtenerMensajes(alumnoId:alumno.id, profesorId:profesor.id)}";
+    let lastMessageId = parseInt(chatBox.dataset.lastId || "0", 10);
 
-      const emisorId   = document.getElementById("emisorId").value;
-      const receptorId = document.getElementById("receptorId").value;
-
-      const data = new URLSearchParams();
-      data.append("emisorId", emisorId);
-      data.append("receptorId", receptorId);
-      data.append("contenido", contenido);
-
-      const response = await fetch("@{Application.enviarMensaje}", {
-        method: "POST",
-        body: data
-      });
-
-      if (response.ok) {
-        const msg = await response.json();   // ← debe venir con emisor.id, emisor.username y contenido
-        mostrarMensaje(msg);
-        document.getElementById("mensaje").value = "";
-      } else {
-        alert("Error enviando mensaje");
-      }
+    function escapeHtml(text) {
+        return text.replace(/[&<>"']/g, function (char) {
+            return ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            })[char];
+        });
     }
 
-    function mostrarMensaje(m) {
+    function formatTimestamp(value) {
+        const date = new Date(value);
+        if (isNaN(date.getTime())) {
+            return "";
+        }
+        return date.toLocaleString("es-ES", {
+            day: "2-digit",
+            month: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+    }
 
-    const yoId = document.getElementById("emisorId").value;
-    const div = document.createElement("div");
-    const esMio = String(m.emisor.id) === String(yoId);
+    function renderMessage(message) {
+        if (!message || !message.emisor) {
+            return;
+        }
+        const bubble = document.createElement("div");
+        const isMine = String(message.emisor.id) === String(yoId);
+        bubble.className = "bubble " + (isMine ? "mine" : "other");
+        bubble.dataset.id = message.id;
+        bubble.innerHTML = `
+            <div class="meta">
+                <span>${escapeHtml(message.emisor.username)}</span>
+                <time>${formatTimestamp(message.fecha)}</time>
+            </div>
+            <p>${escapeHtml(message.contenido || "")}</p>
+        `;
+        chatBox.appendChild(bubble);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        if (message.id) {
+            lastMessageId = Math.max(lastMessageId, parseInt(message.id, 10));
+            chatBox.dataset.lastId = lastMessageId;
+        }
+    }
 
-    div.className = "msg " + (esMio ? "emisor" : "receptor");
-    div.innerHTML = "<b>" + m.emisor.username + ":</b> " + m.contenido;
-    document.getElementById("chatBox").appendChild(div);
-    div.scrollIntoView({behavior: "smooth"});
-  }
+    async function enviarMensaje(event) {
+        event.preventDefault();
+        const contenido = mensajeInput.value.trim();
+        if (!contenido) {
+            return false;
+        }
+        const data = new URLSearchParams();
+        data.append("receptorId", receptorId);
+        data.append("contenido", contenido);
 
-    // Recargar mensajes cada 3 segundos (puedes dejarlo igual)
-    setInterval(async () => {
-      const res = await fetch(window.location.href);
-      const html = await res.text();
-      const parser = new DOMParser();
-      const newDoc = parser.parseFromString(html, "text/html");
-      const newChat = newDoc.querySelector("#chatBox").innerHTML;
-      document.querySelector("#chatBox").innerHTML = newChat;
-    }, 3000);
+        try {
+            const response = await fetch(enviarUrl, { method: "POST", body: data });
+            if (!response.ok) {
+                throw new Error("Respuesta no válida");
+            }
+            const message = await response.json();
+            renderMessage(message);
+            mensajeInput.value = "";
+            mensajeInput.focus();
+        } catch (err) {
+            alert("No se pudo enviar el mensaje. Inténtalo de nuevo.");
+        }
+        return false;
+    }
+
+    async function cargarNuevosMensajes() {
+        try {
+            let url = mensajesUrlBase;
+            if (lastMessageId) {
+                url += (mensajesUrlBase.indexOf('?') === -1 ? '?' : '&') + "lastId=" + lastMessageId;
+            }
+            const response = await fetch(url, { cache: "no-store" });
+            if (!response.ok) {
+                return;
+            }
+            const mensajes = await response.json();
+            if (Array.isArray(mensajes)) {
+                mensajes.forEach(renderMessage);
+            }
+        } catch (err) {
+            // Silenciamos errores de red para no molestar al usuario.
+        }
+    }
+
+    if (lastMessageId) {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    setInterval(cargarNuevosMensajes, 3000);
+    cargarNuevosMensajes();
 </script>
-
 
 </body>
 </html>
