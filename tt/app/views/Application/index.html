@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Proyecto Web - Plataforma de Clases</title>
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #74ebd5, #acb6e5);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            padding: 40px 50px;
+            width: 400px;
+            text-align: center;
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 { margin-bottom: 10px; color: #2c3e50; }
+        h2 { margin-top: 30px; color: #3f87a6; }
+
+        form { margin-top: 10px; text-align: left; }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #444;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 15px;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background-color: #3f87a6;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover { background-color: #2d6c8a; }
+
+        .msg {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .msg.ok {
+            background-color: #eafbea;
+            border: 2px solid #2ecc71;
+            color: #2e7d32;
+        }
+
+        .msg.error {
+            background-color: #fdecea;
+            border: 2px solid #e74c3c;
+            color: #c0392b;
+        }
+
+        .switch {
+            margin-top: 15px;
+            color: #3f87a6;
+            cursor: pointer;
+            text-decoration: underline;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📘 Proyecto Web</h1>
+    <p>Plataforma de clases online</p>
+
+    <div id="mensaje" class="msg"></div>
+    #{if flash.success}
+    <div style="background-color:#d4edda;color:#155724;padding:10px;border-radius:5px;text-align:center;margin-bottom:10px;">
+        ${flash.success}
+    </div>
+    #{/if}
+    #{if flash.error}
+    <div style="background-color:#f8d7da;color:#721c24;padding:10px;border-radius:5px;text-align:center;margin-bottom:10px;">
+        ${flash.error}
+    </div>
+    #{/if}
+
+    <div id="loginForm">
+        <h2>Iniciar sesión</h2>
+        <form id="formLogin" onsubmit="return loginUser(event)">
+            <label>Usuario:</label>
+            <input type="text" name="username" required>
+            <label>Contraseña:</label>
+            <input type="password" name="password" required>
+            <button type="submit">Entrar</button>
+        </form>
+        <div class="switch" onclick="mostrarRegistro()">¿No tienes cuenta? Regístrate</div>
+    </div>
+
+    <div id="registerForm" style="display:none;">
+        <h2>Registrarse</h2>
+        <form id="formRegister" onsubmit="return registerUser(event)">
+            <label>Usuario:</label>
+            <input type="text" name="username" required>
+            <label>Contraseña:</label>
+            <input type="password" name="password" required>
+            <label>Email:</label>
+            <input type="email" name="email" required>
+            <label>Nombre completo:</label>
+            <input type="text" name="fullName" required>
+            <label>Rol:</label>
+            <select name="rol" required>
+                <option value="alumno">Alumno</option>
+                <option value="profesor">Profesor</option>
+            </select>
+            <button type="submit">Registrar</button>
+        </form>
+        <div class="switch" onclick="mostrarLogin()">¿Ya tienes cuenta? Inicia sesión</div>
+    </div>
+</div>
+
+<script>
+    function mostrarRegistro() {
+        document.getElementById("loginForm").style.display = "none";
+        document.getElementById("registerForm").style.display = "block";
+        limpiarMensaje();
+    }
+
+    function mostrarLogin() {
+        document.getElementById("registerForm").style.display = "none";
+        document.getElementById("loginForm").style.display = "block";
+        limpiarMensaje();
+    }
+
+    function mostrarMensaje(texto, tipo) {
+        const msg = document.getElementById("mensaje");
+        msg.textContent = texto;
+        msg.className = "msg " + tipo;
+        msg.style.display = "block";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function limpiarMensaje() {
+        const msg = document.getElementById("mensaje");
+        msg.style.display = "none";
+        msg.textContent = "";
+    }
+
+    // LOGIN
+    async function loginUser(e) {
+        e.preventDefault();
+        const form = e.target;
+        const data = new URLSearchParams(new FormData(form));
+
+        try {
+            const response = await fetch("@{Application.login}", {
+                method: "POST",
+                body: data
+            });
+
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("text/html")) {
+                mostrarMensaje("✅ Bienvenido, redirigiendo al panel...", "ok");
+                const html = await response.text();
+                setTimeout(() => {
+                    document.open();
+                    document.write(html);
+                    document.close();
+                }, 800);
+            } else {
+                const text = await response.text();
+                if (text.includes("incorrectos")) {
+                    mostrarMensaje("❌ Usuario o contraseña incorrectos", "error");
+                } else {
+                    mostrarMensaje("⚠️ " + text, "error");
+                }
+            }
+        } catch {
+            mostrarMensaje("❌ Error de conexión", "error");
+        }
+    }
+
+    // REGISTRO
+    async function registerUser(e) {
+        e.preventDefault();
+        const form = e.target;
+        const data = new URLSearchParams(new FormData(form));
+
+        try {
+            const response = await fetch("@{Application.register}", {
+                method: "POST",
+                body: data
+            });
+            const text = await response.text();
+
+            if (text.includes("existe")) {
+                mostrarMensaje("⚠️ El usuario ya existe", "error");
+            } else if (text.includes("registrado correctamente")) {
+                mostrarMensaje("✅ " + text, "ok");
+                form.reset();
+                // ✅ Espera un segundo y vuelve automáticamente al login
+                setTimeout(() => {
+                    mostrarLogin();
+                }, 1200);
+            } else {
+                mostrarMensaje("⚠️ " + text, "error");
+            }
+        } catch {
+            mostrarMensaje("❌ Error de conexión", "error");
+        }
+    }
+</script>
+
+</body>
+</html>

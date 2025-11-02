@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel del Profesor</title>
+    <style>
+        body { font-family: "Segoe UI", sans-serif; background: #f4f7f9; padding: 30px; }
+        h1 { text-align: center; color: #2c3e50; }
+        table { width: 90%; margin: auto; border-collapse: collapse; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: center; }
+        th { background: #3f87a6; color: white; }
+        button {
+            background: #3f87a6;
+            border: none;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover { background: #2d6c8a; }
+    </style>
+</head>
+<body>
+<h1>👨‍🏫 Bienvenido ${profesor.fullName}</h1>
+<table>
+    <tr><th>Materia</th><th>Alumno</th><th>Chat</th></tr>
+    #{list items:misAlumnos, as:'ins'}
+    <tr>
+        <td>${ins.materia.nombre}</td>
+        <td>${ins.alumno.fullName}</td>
+        <td>
+            <a href="@{Application.chat(ins.alumno.id, profesor.id)}">💬 Abrir chat</a>
+        </td>
+    </tr>
+    #{/list}
+</table>
+</body>
+</html>

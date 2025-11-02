@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${m.nombre}</title>
+    <style>
+        body { font-family: "Segoe UI", sans-serif; background: linear-gradient(to right, #c9ffbf, #ffafbd); height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); text-align: center; width: 400px; }
+        select, button { padding: 10px; margin-top: 10px; width: 90%; border-radius: 8px; border: 1px solid #ccc; }
+        button { background-color: #3f87a6; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #2d6c8a; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>${m.nombre}</h1>
+    <p>${m.descripcion}</p>
+    <form action="@{Application.inscribirse}" method="POST">
+        <input type="hidden" name="id" value="${m.id}">
+        <input type="hidden" name="username" value="${u.username}">
+        <label>Selecciona profesor:</label><br>
+        <select name="profesorId" required>
+            #{list items:profesores, as:'p'}
+            <option value="${p.id}">${p.fullName}</option>
+            #{/list}
+        </select>
+        <button type="submit">Inscribirme</button>
+    </form>
+
+    <form action="@{Application.panelAlumno}" method="POST" style="margin-top:15px;">
+        <input type="hidden" name="username" value="${u.username}">
+        <button type="submit">Volver</button>
+    </form>
+</div>
+</body>
+</html>

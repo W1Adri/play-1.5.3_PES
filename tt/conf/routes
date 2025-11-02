@@ -1,0 +1,40 @@
+# --- Home / Estáticos ---
+# Página de inicio (Login/Registro)
+GET     /                                   Application.index
+# Recursos estáticos (CSS, JS, Imágenes)
+GET     /public/                            staticDir:public
+# Ignorar favicon
+GET     /favicon.ico                        404
+
+
+# --- Login / Logout / Registro ---
+# Reciben datos de un formulario (por eso POST)
+POST    /login                              Application.login
+POST    /register                           Application.register
+# El logout es solo un link (por eso GET)
+GET     /logout                             Application.logout
+
+
+# --- Paneles de Usuario ---
+GET     /panel/alumno                       Application.panelAlumno
+GET     /panel/profesor                     Application.panelProfesor
+
+
+# --- Materias e Inscripción ---
+# Muestra la página de detalles de una materia específica
+GET     /materia/{id}                       Application.detalle(id)
+
+# Inscribe al alumno (conectado) en una materia
+# (Recibe el 'id' de la materia y el 'profesorId' del formulario)
+POST    /materia/inscribirse                Application.inscribirse(id, profesorId)
+
+
+# --- Chat (API y Vista) ---
+# Muestra la página HTML del chat entre dos usuarios
+GET     /chat/{alumnoId}/{profesorId}       Application.chat(alumnoId, profesorId)
+
+# URL de la API para enviar un mensaje (debe ser POST)
+POST    /api/chat/enviar                    Application.enviarMensaje(receptorId, contenido)
+
+# URL de la API para obtener mensajes nuevos (debe ser GET)
+GET     /api/chat/mensajes                  Application.obtenerMensajes(alumnoId, profesorId)
