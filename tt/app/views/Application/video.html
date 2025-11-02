@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Clase en vídeo</title>
+    <style>
+        :root {
+            color-scheme: light;
+        }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top left, #dff6ff 0%, #f6f9ff 50%, #fff 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 32px;
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 6px 22px rgba(31, 56, 82, 0.1);
+        }
+        header h1 {
+            margin: 0;
+            color: #1f3b4d;
+            font-size: 20px;
+        }
+        header span {
+            color: #4f6b80;
+            font-size: 14px;
+        }
+        main {
+            flex: 1;
+            padding: 28px;
+            display: grid;
+            gap: 24px;
+        }
+        .videos {
+            display: grid;
+            gap: 22px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+        video {
+            width: 100%;
+            border-radius: 20px;
+            background: #000;
+            aspect-ratio: 16 / 9;
+            box-shadow: 0 18px 45px rgba(35, 57, 91, 0.25);
+        }
+        .panel {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 20px;
+            padding: 22px;
+            box-shadow: 0 18px 40px rgba(31, 56, 82, 0.12);
+            display: grid;
+            gap: 16px;
+        }
+        .panel h2 {
+            margin: 0;
+            color: #1f3b4d;
+            font-size: 18px;
+        }
+        .status {
+            font-size: 15px;
+            color: #2f5670;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border-radius: 999px;
+            border: none;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            color: #fff;
+            background: linear-gradient(135deg, #3f87a6, #266d8e);
+            box-shadow: 0 6px 18px rgba(63, 135, 166, 0.35);
+            transition: transform .2s ease;
+        }
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid rgba(47, 86, 112, 0.3);
+            color: #2f5670;
+            box-shadow: none;
+        }
+        .btn.danger {
+            background: linear-gradient(135deg, #ff6b6b, #d1456b);
+            box-shadow: 0 6px 18px rgba(209, 69, 107, 0.35);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        footer {
+            padding: 18px 32px;
+            text-align: center;
+            color: #4f6b80;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div>
+        <h1>Clase en vídeo - ${reserva.materia.nombre}</h1>
+        <span>Conecta con ${yo.rol == models.Rol.ALUMNO ? reserva.profesor.fullName : reserva.alumno.fullName}</span>
+    </div>
+    <div class="actions">
+        <a class="btn secondary" href="@{Application.reservas()}">Volver</a>
+        <a class="btn danger" href="@{Application.logout()}">Cerrar sesión</a>
+    </div>
+</header>
+
+<main>
+    <div class="videos">
+        <video id="localVideo" autoplay playsinline muted></video>
+        <video id="remoteVideo" autoplay playsinline></video>
+    </div>
+
+    <div class="panel">
+        <h2>Control de la clase</h2>
+        <div id="status" class="status">Pulsa "Entrar a la clase" para activar tu cámara y conectar.</div>
+        <div style="display:flex; flex-wrap: wrap; gap: 12px;">
+            <button class="btn" id="joinBtn">Entrar a la clase</button>
+            <button class="btn secondary" id="reiniciarBtn" disabled>Reintentar conexión</button>
+            <button class="btn danger" id="leaveBtn" disabled>Finalizar</button>
+        </div>
+        <div class="status">Código de sala: ${reserva.codigoSala}</div>
+    </div>
+</main>
+
+<footer>
+    Esta videollamada utiliza WebRTC con un servidor STUN público (Google) para establecer la conexión.
+</footer>
+
+<script type="text/javascript">
+(function() {
+    const reservaId = ${reserva.id};
+    const isProfesor = ${yo.rol == models.Rol.PROFESOR};
+    const resetUrl = '@{Application.resetearSesionVideo(reserva.id)}';
+    const offerPostUrl = '@{Application.publicarOffer(reserva.id)}';
+    const offerGetUrl = '@{Application.obtenerOffer(reserva.id)}';
+    const answerPostUrl = '@{Application.publicarAnswer(reserva.id)}';
+    const answerGetUrl = '@{Application.obtenerAnswer(reserva.id)}';
+
+    const joinBtn = document.getElementById('joinBtn');
+    const leaveBtn = document.getElementById('leaveBtn');
+    const reiniciarBtn = document.getElementById('reiniciarBtn');
+    const statusEl = document.getElementById('status');
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+
+    let pc = null;
+    let localStream = null;
+    let activo = false;
+    let polling = false;
+
+    function updateStatus(message) {
+        statusEl.textContent = message;
+    }
+
+    function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function post(url, body) {
+        return fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: body
+        }).then(r => r.json());
+    }
+
+    async function prepararConexion() {
+        pc = new RTCPeerConnection({
+            iceServers: [{urls: 'stun:stun.l.google.com:19302'}]
+        });
+
+        pc.ontrack = (event) => {
+            if (event.streams && event.streams[0]) {
+                remoteVideo.srcObject = event.streams[0];
+            }
+        };
+
+        pc.onconnectionstatechange = () => {
+            if (!pc) return;
+            updateStatus('Estado de la conexión: ' + pc.connectionState);
+        };
+
+        localStream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+        localVideo.srcObject = localStream;
+        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    }
+
+    function esperarIce() {
+        if (!pc) return Promise.resolve();
+        if (pc.iceGatheringState === 'complete') {
+            return Promise.resolve();
+        }
+        return new Promise(resolve => {
+            function checkState() {
+                if (!pc) return;
+                if (pc.iceGatheringState === 'complete') {
+                    pc.removeEventListener('icegatheringstatechange', checkState);
+                    resolve();
+                }
+            }
+            pc.addEventListener('icegatheringstatechange', checkState);
+        });
+    }
+
+    async function iniciarProfesor() {
+        updateStatus('Preparando oferta de conexión...');
+        await post(resetUrl, 'dummy=1');
+        const offer = await pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true});
+        await pc.setLocalDescription(offer);
+        await esperarIce();
+        await post(offerPostUrl, 'sdp=' + encodeURIComponent(pc.localDescription.sdp));
+        updateStatus('Oferta enviada. Esperando respuesta del alumno...');
+        polling = true;
+        while (activo && polling) {
+            await delay(2000);
+            const respuesta = await fetch(answerGetUrl).then(r => r.json());
+            if (respuesta && respuesta.sdp) {
+                await pc.setRemoteDescription({type: 'answer', sdp: respuesta.sdp});
+                updateStatus('Respuesta recibida. Conectando...');
+                polling = false;
+            }
+        }
+    }
+
+    async function iniciarAlumno() {
+        updateStatus('Esperando la oferta del profesor...');
+        polling = true;
+        while (activo && polling) {
+            await delay(2000);
+            const oferta = await fetch(offerGetUrl).then(r => r.json());
+            if (oferta && oferta.sdp) {
+                await pc.setRemoteDescription({type: 'offer', sdp: oferta.sdp});
+                updateStatus('Oferta recibida. Generando respuesta...');
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                await esperarIce();
+                await post(answerPostUrl, 'sdp=' + encodeURIComponent(pc.localDescription.sdp));
+                updateStatus('Respuesta enviada. Esperando conexión...');
+                polling = false;
+            }
+        }
+    }
+
+    async function iniciarSesion() {
+        if (activo) return;
+        joinBtn.disabled = true;
+        reiniciarBtn.disabled = true;
+        leaveBtn.disabled = false;
+        activo = true;
+
+        try {
+            await prepararConexion();
+            if (isProfesor) {
+                await iniciarProfesor();
+            } else {
+                await iniciarAlumno();
+            }
+        } catch (err) {
+            console.error(err);
+            limpiarSesion('No se pudo establecer la conexión: ' + err.message);
+            try { await post(resetUrl, 'dummy=1'); } catch (e) {}
+        }
+    }
+
+    function limpiarSesion(mensaje) {
+        polling = false;
+        activo = false;
+        joinBtn.disabled = false;
+        reiniciarBtn.disabled = false;
+        leaveBtn.disabled = true;
+        updateStatus(mensaje || 'Sesión finalizada. Puedes volver a conectar cuando quieras.');
+
+        if (pc) {
+            pc.getSenders().forEach(sender => {
+                try { sender.track.stop(); } catch (e) {}
+            });
+            pc.close();
+        }
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+        }
+        localVideo.srcObject = null;
+        pc = null;
+        localStream = null;
+    }
+
+    joinBtn.addEventListener('click', iniciarSesion);
+    reiniciarBtn.addEventListener('click', async () => {
+        limpiarSesion('Reintentando la conexión...');
+        await post(resetUrl, 'dummy=1');
+        joinBtn.click();
+    });
+    leaveBtn.addEventListener('click', async () => {
+        limpiarSesion('Sesión finalizada. Puedes volver a conectar cuando quieras.');
+        await post(resetUrl, 'dummy=1');
+    });
+
+    window.addEventListener('beforeunload', () => {
+        if (activo) {
+            navigator.sendBeacon(resetUrl, 'dummy=1');
+        }
+    });
+})();
+</script>
+</body>
+</html>

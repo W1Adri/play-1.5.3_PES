@@ -5,6 +5,8 @@ import play.mvc.Controller;
 import play.mvc.Before; // Importar @Before
 import play.libs.Crypto; // Importar Crypto para contraseñas
 import java.util.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 public class Application extends Controller {
 
@@ -150,6 +152,215 @@ public class Application extends Controller {
         List<Inscripcion> misAlumnos = Inscripcion.find("byProfesor", profesor).fetch();
         renderTemplate("Application/panelProfesor.html", profesor, misAlumnos,
                 totalUsuarios, totalAlumnos, totalProfesores);
+    }
+
+    // --- RESERVAS DE CLASE ---
+    public static void reservas() {
+        Usuario yo = connected();
+        if (yo == null) {
+            session.clear();
+            flash.error("Debes iniciar sesión nuevamente.");
+            index();
+            return;
+        }
+
+        List<Reserva> reservas;
+        List<Inscripcion> opciones;
+
+        if (yo.rol == Rol.ALUMNO) {
+            reservas = Reserva.find("alumno = ?1 ORDER BY fechaReserva ASC", yo).fetch();
+            opciones = Inscripcion.find("byAlumno", yo).fetch();
+        } else if (yo.rol == Rol.PROFESOR) {
+            reservas = Reserva.find("profesor = ?1 ORDER BY fechaReserva ASC", yo).fetch();
+            opciones = Inscripcion.find("byProfesor", yo).fetch();
+        } else {
+            flash.error("Rol no soportado para reservas.");
+            index();
+            return;
+        }
+
+        Date ahora = new Date();
+        renderTemplate("Application/reservas.html", yo, reservas, opciones, ahora);
+    }
+
+    public static void crearReserva(Long inscripcionId, String fecha, String hora) {
+        Usuario yo = connected();
+        if (yo == null) {
+            session.clear();
+            flash.error("Debes iniciar sesión nuevamente.");
+            index();
+            return;
+        }
+
+        if (inscripcionId == null) {
+            flash.error("Selecciona una inscripción válida.");
+            reservas();
+            return;
+        }
+
+        Inscripcion inscripcion = Inscripcion.findById(inscripcionId);
+        if (inscripcion == null) {
+            flash.error("La inscripción seleccionada no existe.");
+            reservas();
+            return;
+        }
+
+        if (!yo.id.equals(inscripcion.alumno.id) && !yo.id.equals(inscripcion.profesor.id)) {
+            flash.error("No tienes permiso para crear reservas con esa inscripción.");
+            reservas();
+            return;
+        }
+
+        if (fecha == null || fecha.trim().isEmpty() || hora == null || hora.trim().isEmpty()) {
+            flash.error("Indica la fecha y la hora de la clase.");
+            reservas();
+            return;
+        }
+
+        Date fechaReserva;
+        try {
+            SimpleDateFormat formato = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+            formato.setLenient(false);
+            fechaReserva = formato.parse(fecha.trim() + " " + hora.trim());
+        } catch (ParseException e) {
+            flash.error("Formato de fecha u hora inválido.");
+            reservas();
+            return;
+        }
+
+        Reserva nueva = new Reserva(inscripcion.profesor, inscripcion.alumno, inscripcion.materia, fechaReserva);
+        nueva.save();
+
+        flash.success("Reserva creada para " + inscripcion.materia.nombre + " el " + fecha + " a las " + hora + ".");
+        reservas();
+    }
+
+    public static void video(Long reservaId) {
+        Usuario yo = connected();
+        if (yo == null) {
+            session.clear();
+            flash.error("Debes iniciar sesión nuevamente.");
+            index();
+            return;
+        }
+
+        Reserva reserva = Reserva.findById(reservaId);
+        if (reserva == null) {
+            flash.error("La reserva solicitada no existe.");
+            reservas();
+            return;
+        }
+
+        if (!yo.id.equals(reserva.alumno.id) && !yo.id.equals(reserva.profesor.id)) {
+            flash.error("No tienes permiso para acceder a esta sala.");
+            reservas();
+            return;
+        }
+
+        renderTemplate("Application/video.html", yo, reserva);
+    }
+
+    public static void resetearSesionVideo(Long reservaId) {
+        Reserva reserva = obtenerReservaAutorizada(reservaId);
+        if (reserva == null) return;
+
+        reserva.reiniciarSesion();
+        reserva.save();
+
+        Map<String, Object> resp = new HashMap<String, Object>();
+        resp.put("status", "ok");
+        renderJSON(resp);
+    }
+
+    public static void publicarOffer(Long reservaId, String sdp) {
+        Reserva reserva = obtenerReservaAutorizada(reservaId);
+        if (reserva == null) return;
+
+        if (sdp == null || sdp.trim().isEmpty()) {
+            Map<String, String> error = new HashMap<String, String>();
+            error.put("error", "SDP vacío");
+            renderJSON(error);
+            return;
+        }
+
+        reserva.offerSdp = sdp.trim();
+        reserva.offerActualizada = new Date();
+        reserva.answerSdp = null;
+        reserva.answerActualizada = null;
+        reserva.save();
+
+        Map<String, Object> resp = new HashMap<String, Object>();
+        resp.put("status", "ok");
+        renderJSON(resp);
+    }
+
+    public static void publicarAnswer(Long reservaId, String sdp) {
+        Reserva reserva = obtenerReservaAutorizada(reservaId);
+        if (reserva == null) return;
+
+        if (sdp == null || sdp.trim().isEmpty()) {
+            Map<String, String> error = new HashMap<String, String>();
+            error.put("error", "SDP vacío");
+            renderJSON(error);
+            return;
+        }
+
+        reserva.answerSdp = sdp.trim();
+        reserva.answerActualizada = new Date();
+        reserva.save();
+
+        Map<String, Object> resp = new HashMap<String, Object>();
+        resp.put("status", "ok");
+        renderJSON(resp);
+    }
+
+    public static void obtenerOffer(Long reservaId) {
+        Reserva reserva = obtenerReservaAutorizada(reservaId);
+        if (reserva == null) return;
+
+        Map<String, Object> resp = new HashMap<String, Object>();
+        resp.put("sdp", reserva.offerSdp);
+        resp.put("type", reserva.offerSdp != null ? "offer" : null);
+        resp.put("timestamp", reserva.offerActualizada != null ? reserva.offerActualizada.getTime() : null);
+        renderJSON(resp);
+    }
+
+    public static void obtenerAnswer(Long reservaId) {
+        Reserva reserva = obtenerReservaAutorizada(reservaId);
+        if (reserva == null) return;
+
+        Map<String, Object> resp = new HashMap<String, Object>();
+        resp.put("sdp", reserva.answerSdp);
+        resp.put("type", reserva.answerSdp != null ? "answer" : null);
+        resp.put("timestamp", reserva.answerActualizada != null ? reserva.answerActualizada.getTime() : null);
+        renderJSON(resp);
+    }
+
+    private static Reserva obtenerReservaAutorizada(Long reservaId) {
+        Usuario yo = connected();
+        if (yo == null) {
+            session.clear();
+            flash.error("Debes iniciar sesión nuevamente.");
+            index();
+            return null;
+        }
+
+        Reserva reserva = Reserva.findById(reservaId);
+        if (reserva == null) {
+            Map<String, String> error = new HashMap<String, String>();
+            error.put("error", "Reserva no encontrada");
+            renderJSON(error);
+            return null;
+        }
+
+        if (!yo.id.equals(reserva.alumno.id) && !yo.id.equals(reserva.profesor.id)) {
+            Map<String, String> error = new HashMap<String, String>();
+            error.put("error", "No autorizado");
+            renderJSON(error);
+            return null;
+        }
+
+        return reserva;
     }
 
     // --- CONSULTAS PERSONALIZADAS ---
