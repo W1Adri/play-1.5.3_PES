@@ -18,6 +18,15 @@ GET     /logout                             Application.logout
 # --- Paneles de Usuario ---
 GET     /panel/alumno                       Application.panelAlumno
 GET     /panel/profesor                     Application.panelProfesor
+GET     /consultas                          Application.consultas(tipo, materiaId)
+GET     /reservas                           Application.reservas
+POST    /reservas/crear                     Application.crearReserva(inscripcionId, fecha, hora)
+GET     /reservas/{reservaId}/video         Application.video(reservaId)
+POST    /reservas/{reservaId}/reset         Application.resetearSesionVideo(reservaId)
+POST    /reservas/{reservaId}/offer         Application.publicarOffer(reservaId, sdp)
+POST    /reservas/{reservaId}/answer        Application.publicarAnswer(reservaId, sdp)
+GET     /reservas/{reservaId}/offer         Application.obtenerOffer(reservaId)
+GET     /reservas/{reservaId}/answer        Application.obtenerAnswer(reservaId)
 
 
 # --- Materias e Inscripción ---
@@ -37,4 +46,4 @@ GET     /chat/{alumnoId}/{profesorId}       Application.chat(alumnoId, profesorI
 POST    /api/chat/enviar                    Application.enviarMensaje(receptorId, contenido)
 
 # URL de la API para obtener mensajes nuevos (debe ser GET)
-GET     /api/chat/mensajes                  Application.obtenerMensajes(alumnoId, profesorId)
+GET     /api/chat/mensajes                  Application.obtenerMensajes(alumnoId, profesorId, lastId)
