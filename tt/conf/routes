@@ -37,4 +37,4 @@ GET     /chat/{alumnoId}/{profesorId}       Application.chat(alumnoId, profesorI
 POST    /api/chat/enviar                    Application.enviarMensaje(receptorId, contenido)
 
 # URL de la API para obtener mensajes nuevos (debe ser GET)
-GET     /api/chat/mensajes                  Application.obtenerMensajes(alumnoId, profesorId)
+GET     /api/chat/mensajes                  Application.obtenerMensajes(alumnoId, profesorId, lastId)
