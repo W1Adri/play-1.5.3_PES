@@ -18,6 +18,7 @@ GET     /logout                             Application.logout
 # --- Paneles de Usuario ---
 GET     /panel/alumno                       Application.panelAlumno
 GET     /panel/profesor                     Application.panelProfesor
+GET     /consultas                          Application.consultas(tipo, materiaId)
 
 
 # --- Materias e Inscripción ---

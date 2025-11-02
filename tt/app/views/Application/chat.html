@@ -196,10 +196,10 @@
     <div class="chat-shell">
         <div id="chatBox" data-last-id="${mensajes != null && mensajes.size() > 0 ? mensajes.get(mensajes.size() - 1).id : 0}">
             #{list items:mensajes, as:'m'}
-                #{if m && m.emisor}
+                #{if m != null && m.emisor != null}
                     <div class="bubble ${m.emisor != null && m.emisor.id == yo.id ? 'mine' : 'other'}" data-id="${m.id}">
                         <div class="meta">
-                            <span>${m.emisor.username}</span>
+                            <span>${m.emisor?.username ?: 'Usuario'}</span>
                             <time>${m.fecha != null ? new java.text.SimpleDateFormat("dd/MM HH:mm").format(m.fecha) : ""}</time>
                         </div>
                         <p>${m.contenido != null ? m.contenido : ""}</p>
@@ -225,18 +225,6 @@
     const mensajesUrlBase = "@{Application.obtenerMensajes(alumnoId:alumno.id, profesorId:profesor.id)}";
     let lastMessageId = parseInt(chatBox.dataset.lastId || "0", 10);
 
-    function escapeHtml(text) {
-        return text.replace(/[&<>"']/g, function (char) {
-            return ({
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                '"': "&quot;",
-                "'": "&#39;"
-            })[char];
-        });
-    }
-
     function formatTimestamp(value) {
         const date = new Date(value);
         if (isNaN(date.getTime())) {
@@ -258,13 +246,22 @@
         const isMine = String(message.emisor.id) === String(yoId);
         bubble.className = "bubble " + (isMine ? "mine" : "other");
         bubble.dataset.id = message.id;
-        bubble.innerHTML = `
-            <div class="meta">
-                <span>${escapeHtml(message.emisor.username)}</span>
-                <time>${formatTimestamp(message.fecha)}</time>
-            </div>
-            <p>${escapeHtml(message.contenido || "")}</p>
-        `;
+        const meta = document.createElement("div");
+        meta.className = "meta";
+
+        const author = document.createElement("span");
+        author.textContent = message.emisor.username || "Usuario";
+        const time = document.createElement("time");
+        time.textContent = formatTimestamp(message.fecha);
+
+        meta.appendChild(author);
+        meta.appendChild(time);
+
+        const body = document.createElement("p");
+        body.textContent = message.contenido || "";
+
+        bubble.appendChild(meta);
+        bubble.appendChild(body);
         chatBox.appendChild(bubble);
         chatBox.scrollTop = chatBox.scrollHeight;
         if (message.id) {

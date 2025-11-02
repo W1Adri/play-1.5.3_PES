@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Consultas personalizadas</title>
+    <style>
+        :root { color-scheme: light; }
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top right, #ffd6a5 0%, #fff8ec 40%, #dff6f5 100%);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .top-bar {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.88);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 6px 20px rgba(25, 55, 109, 0.12);
+        }
+        .brand {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .brand strong { font-size: 20px; color: #22435f; }
+        .brand span { font-size: 14px; color: #4f6b80; }
+        .actions { display: flex; gap: 12px; align-items: center; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 16px;
+            border-radius: 999px;
+            border: none;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+        .btn.secondary {
+            color: #2f5670;
+            background: transparent;
+            border: 1px solid rgba(63, 135, 166, 0.35);
+        }
+        .btn.logout {
+            color: white;
+            background: linear-gradient(135deg, #ff6b6b, #d1456b);
+            box-shadow: 0 4px 12px rgba(209, 69, 107, 0.35);
+        }
+        .btn.primary {
+            color: white;
+            background: linear-gradient(135deg, #3f87a6, #266d8e);
+            box-shadow: 0 4px 12px rgba(63, 135, 166, 0.35);
+        }
+        .btn:hover { transform: translateY(-1px); }
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            padding: 40px 16px 60px;
+        }
+        .shell {
+            width: min(960px, 100%);
+            display: grid;
+            gap: 24px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 18px 40px rgba(33, 64, 86, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        .card h1 {
+            margin: 0 0 18px;
+            font-size: 24px;
+            color: #22435f;
+        }
+        form.query {
+            display: grid;
+            gap: 18px;
+        }
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        label { color: #2f5670; font-weight: 600; }
+        select {
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(63, 135, 166, 0.35);
+            font-size: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            font-family: inherit;
+        }
+        .feedback {
+            padding: 16px;
+            border-radius: 16px;
+            background: rgba(63, 135, 166, 0.08);
+            color: #244155;
+            line-height: 1.4;
+        }
+        .feedback.error {
+            background: rgba(255, 107, 107, 0.12);
+            color: #a33040;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+        .results {
+            display: grid;
+            gap: 16px;
+        }
+        .result-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: #22435f;
+        }
+        .user-list {
+            display: grid;
+            gap: 10px;
+        }
+        .user-item {
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: rgba(63, 135, 166, 0.12);
+            color: #2f5670;
+            font-weight: 600;
+        }
+        @media (max-width: 640px) {
+            .top-bar {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+            .actions { width: 100%; justify-content: flex-end; }
+        }
+    </style>
+</head>
+<body>
+<header class="top-bar">
+    <div class="brand">
+        <strong>Consultas de la base de datos</strong>
+        <span>${yo.fullName}</span>
+    </div>
+    <div class="actions">
+        #{if yo.rol == models.Rol.ALUMNO}
+            <a class="btn secondary" href="@{Application.panelAlumno()}">← Volver al panel</a>
+        #{/if}
+        #{elseif yo.rol == models.Rol.PROFESOR}
+            <a class="btn secondary" href="@{Application.panelProfesor()}">← Volver al panel</a>
+        #{/elseif}
+        <a class="btn logout" href="@{Application.logout()}">Cerrar sesión</a>
+    </div>
+</header>
+
+<main>
+    <div class="shell">
+        <section class="card">
+            <h1>Define tu consulta</h1>
+            <form class="query" method="get" action="@{Application.consultas()}">
+                <div class="field">
+                    <label for="tipo">Tipo de consulta</label>
+                    <select id="tipo" name="tipo" required>
+                        <option value="" #{if tipo == null || tipo.trim().isEmpty()}selected#{/if}>Selecciona una opción…</option>
+                        <option value="totalUsuarios" #{if 'totalUsuarios'.equals(tipo)}selected#{/if}>Usuarios totales</option>
+                        <option value="totalAlumnos" #{if 'totalAlumnos'.equals(tipo)}selected#{/if}>Alumnos registrados</option>
+                        <option value="totalProfesores" #{if 'totalProfesores'.equals(tipo)}selected#{/if}>Profesores registrados</option>
+                        <option value="profesoresMateria" #{if 'profesoresMateria'.equals(tipo)}selected#{/if}>Profesores por materia</option>
+                        <option value="alumnosMateria" #{if 'alumnosMateria'.equals(tipo)}selected#{/if}>Alumnos por materia</option>
+                    </select>
+                </div>
+                <div class="field" id="materiaField">
+                    <label for="materiaId">Materia</label>
+                    <select id="materiaId" name="materiaId">
+                        <option value="">Selecciona una materia…</option>
+                        #{list items:materias, as:'m'}
+                            <option value="${m.id}" #{if materiaSeleccionada != null && materiaSeleccionada.id.equals(m.id)}selected#{/if}>${m.nombre}</option>
+                        #{/list}
+                    </select>
+                </div>
+                <div>
+                    <button class="btn primary" type="submit">Consultar</button>
+                </div>
+            </form>
+        </section>
+
+        #{if error}
+            <div class="card feedback error">${error}</div>
+        #{/if}
+        #{elseif resultado != null}
+            <section class="card results">
+                <div>
+                    <div class="result-number">${resultado}</div>
+                    <div>${descripcion}</div>
+                </div>
+                #{if detalleUsuarios && detalleUsuarios.size() > 0}
+                    <div class="user-list">
+                        #{list items:detalleUsuarios, as:'usuario'}
+                            <div class="user-item">${usuario.fullName} · ${usuario.username}</div>
+                        #{/list}
+                    </div>
+                #{/if}
+            </section>
+        #{/elseif}
+    </div>
+</main>
+
+<script>
+    const tipoSelect = document.getElementById('tipo');
+    const materiaField = document.getElementById('materiaField');
+    const materiaSelect = document.getElementById('materiaId');
+
+    function updateMateriaVisibility() {
+        const value = tipoSelect.value;
+        const needsMateria = value === 'profesoresMateria' || value === 'alumnosMateria';
+        materiaField.style.display = needsMateria ? 'flex' : 'none';
+        if (!needsMateria) {
+            materiaSelect.value = '';
+        }
+    }
+
+    updateMateriaVisibility();
+    tipoSelect.addEventListener('change', updateMateriaVisibility);
+</script>
+</body>
+</html>

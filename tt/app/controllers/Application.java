@@ -152,6 +152,70 @@ public class Application extends Controller {
                 totalUsuarios, totalAlumnos, totalProfesores);
     }
 
+    // --- CONSULTAS PERSONALIZADAS ---
+    public static void consultas(String tipo, Long materiaId) {
+        Usuario yo = connected();
+        if (yo == null) {
+            session.clear();
+            flash.error("Debes iniciar sesión nuevamente.");
+            index();
+            return;
+        }
+
+        List<Materia> materias = Materia.findAll();
+        Materia materiaSeleccionada = null;
+        Long resultado = null;
+        String descripcion = null;
+        String error = null;
+        List<Usuario> detalleUsuarios = new ArrayList<Usuario>();
+
+        if (tipo != null && !tipo.trim().isEmpty()) {
+            tipo = tipo.trim();
+            if ("totalUsuarios".equals(tipo)) {
+                resultado = Usuario.count();
+                descripcion = "Usuarios registrados";
+            } else if ("totalAlumnos".equals(tipo)) {
+                resultado = Usuario.count("rol = ?1", Rol.ALUMNO);
+                descripcion = "Alumnos registrados";
+            } else if ("totalProfesores".equals(tipo)) {
+                resultado = Usuario.count("rol = ?1", Rol.PROFESOR);
+                descripcion = "Profesores registrados";
+            } else if ("profesoresMateria".equals(tipo) || "alumnosMateria".equals(tipo)) {
+                if (materiaId == null) {
+                    error = "Selecciona una materia para realizar la consulta.";
+                } else {
+                    materiaSeleccionada = Materia.findById(materiaId);
+                    if (materiaSeleccionada == null) {
+                        error = "La materia indicada no existe.";
+                    } else {
+                        List<Inscripcion> inscripciones = Inscripcion.find("byMateria", materiaSeleccionada).fetch();
+                        LinkedHashMap<Long, Usuario> usuariosUnicos = new LinkedHashMap<Long, Usuario>();
+                        for (Inscripcion inscripcion : inscripciones) {
+                            if ("profesoresMateria".equals(tipo) && inscripcion.profesor != null) {
+                                usuariosUnicos.put(inscripcion.profesor.id, inscripcion.profesor);
+                            }
+                            if ("alumnosMateria".equals(tipo) && inscripcion.alumno != null) {
+                                usuariosUnicos.put(inscripcion.alumno.id, inscripcion.alumno);
+                            }
+                        }
+                        detalleUsuarios = new ArrayList<Usuario>(usuariosUnicos.values());
+                        resultado = Long.valueOf(detalleUsuarios.size());
+                        if ("profesoresMateria".equals(tipo)) {
+                            descripcion = "Profesores registrados en " + materiaSeleccionada.nombre;
+                        } else {
+                            descripcion = "Alumnos inscritos en " + materiaSeleccionada.nombre;
+                        }
+                    }
+                }
+            } else {
+                error = "Consulta no reconocida.";
+            }
+        }
+
+        renderTemplate("Application/consultas.html", yo, materias, tipo, materiaSeleccionada,
+                resultado, descripcion, detalleUsuarios, error);
+    }
+
     // --- DETALLE DE MATERIA ---
     public static void detalle(Long id) {
         Materia m = Materia.findById(id);
