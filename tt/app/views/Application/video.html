@@ -225,6 +225,14 @@
         return normalized;
     }
 
+    function ensureSdpTerminated(value) {
+        if (!value) return value;
+        if (value.endsWith('\r\n') || value.endsWith('\n')) {
+            return value;
+        }
+        return value + '\r\n';
+    }
+
     async function prepararConexion() {
         #{if turnUrls}
         const turnUrls = "${turnUrls}";
@@ -329,7 +337,8 @@
             if (respuesta && respuesta.sdp) {
                 logSdpInfo('Profesor answer recibido', respuesta.sdp);
                 logSdpContent('Profesor answer recibido', respuesta.sdp);
-                await pc.setRemoteDescription({type: 'answer', sdp: normalizeSdp(respuesta.sdp)});
+                const normalizedAnswer = ensureSdpTerminated(normalizeSdp(respuesta.sdp));
+                await pc.setRemoteDescription({type: 'answer', sdp: normalizedAnswer});
                 updateStatus('Respuesta recibida. Conectando...');
                 console.debug('[video] Answer recibido');
                 polling = false;
@@ -349,7 +358,8 @@
             if (oferta && oferta.sdp) {
                 logSdpInfo('Alumno oferta recibida', oferta.sdp);
                 logSdpContent('Alumno oferta recibida', oferta.sdp);
-                await pc.setRemoteDescription({type: 'offer', sdp: normalizeSdp(oferta.sdp)});
+                const normalizedOffer = ensureSdpTerminated(normalizeSdp(oferta.sdp));
+                await pc.setRemoteDescription({type: 'offer', sdp: normalizedOffer});
                 updateStatus('Oferta recibida. Generando respuesta...');
                 console.debug('[video] Oferta recibida');
                 const answer = await pc.createAnswer();
