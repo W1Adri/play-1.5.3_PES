@@ -5,6 +5,7 @@ import play.mvc.Controller;
 import play.mvc.Before; // Importar @Before
 import play.libs.Crypto; // Importar Crypto para contraseñas
 import play.Play;
+import play.Logger;
 import org.apache.commons.codec.binary.Base64;
 import java.util.*;
 import java.text.ParseException;
@@ -497,6 +498,7 @@ public class Application extends Controller {
 
         reserva.reiniciarSesion();
         reserva.save();
+        Logger.info("[video] Sesion reseteada reservaId=%s alumno=%s profesor=%s", reserva.id, reserva.alumno.username, reserva.profesor.username);
 
         Map<String, Object> resp = new HashMap<String, Object>();
         resp.put("status", "ok");
@@ -507,9 +509,11 @@ public class Application extends Controller {
         Reserva reserva = obtenerReservaAutorizada(reservaId);
         if (reserva == null) return;
 
+        Logger.info("[video] publicarOffer reservaId=%s sdp=%s sdp64=%s", reserva.id, sdp != null ? sdp.length() : null, sdp64 != null ? sdp64.length() : null);
         String[] rawParams = extractSdpParams(sdp, sdp64);
         String decoded = decodeSdp(rawParams[0], rawParams[1]);
         if (decoded == null || decoded.trim().isEmpty()) {
+            Logger.warn("[video] publicarOffer SDP vacio reservaId=%s", reserva.id);
             Map<String, String> error = new HashMap<String, String>();
             error.put("error", "SDP vacío");
             renderJSON(error);
@@ -521,6 +525,7 @@ public class Application extends Controller {
         reserva.answerSdp = null;
         reserva.answerActualizada = null;
         reserva.save();
+        Logger.info("[video] Offer guardada reservaId=%s size=%s", reserva.id, reserva.offerSdp.length());
 
         Map<String, Object> resp = new HashMap<String, Object>();
         resp.put("status", "ok");
@@ -531,9 +536,11 @@ public class Application extends Controller {
         Reserva reserva = obtenerReservaAutorizada(reservaId);
         if (reserva == null) return;
 
+        Logger.info("[video] publicarAnswer reservaId=%s sdp=%s sdp64=%s", reserva.id, sdp != null ? sdp.length() : null, sdp64 != null ? sdp64.length() : null);
         String[] rawParams = extractSdpParams(sdp, sdp64);
         String decoded = decodeSdp(rawParams[0], rawParams[1]);
         if (decoded == null || decoded.trim().isEmpty()) {
+            Logger.warn("[video] publicarAnswer SDP vacio reservaId=%s", reserva.id);
             Map<String, String> error = new HashMap<String, String>();
             error.put("error", "SDP vacío");
             renderJSON(error);
@@ -543,6 +550,7 @@ public class Application extends Controller {
         reserva.answerSdp = decoded.trim();
         reserva.answerActualizada = new Date();
         reserva.save();
+        Logger.info("[video] Answer guardada reservaId=%s size=%s", reserva.id, reserva.answerSdp.length());
 
         Map<String, Object> resp = new HashMap<String, Object>();
         resp.put("status", "ok");
@@ -553,6 +561,7 @@ public class Application extends Controller {
         Reserva reserva = obtenerReservaAutorizada(reservaId);
         if (reserva == null) return;
 
+        Logger.debug("[video] obtenerOffer reservaId=%s sdp=%s", reserva.id, reserva.offerSdp != null ? reserva.offerSdp.length() : null);
         Map<String, Object> resp = new HashMap<String, Object>();
         resp.put("sdp", reserva.offerSdp);
         resp.put("type", reserva.offerSdp != null ? "offer" : null);
@@ -564,6 +573,7 @@ public class Application extends Controller {
         Reserva reserva = obtenerReservaAutorizada(reservaId);
         if (reserva == null) return;
 
+        Logger.debug("[video] obtenerAnswer reservaId=%s sdp=%s", reserva.id, reserva.answerSdp != null ? reserva.answerSdp.length() : null);
         Map<String, Object> resp = new HashMap<String, Object>();
         resp.put("sdp", reserva.answerSdp);
         resp.put("type", reserva.answerSdp != null ? "answer" : null);
@@ -582,6 +592,7 @@ public class Application extends Controller {
 
         Reserva reserva = Reserva.findById(reservaId);
         if (reserva == null) {
+            Logger.warn("[video] Reserva no encontrada reservaId=%s usuario=%s", reservaId, yo.username);
             Map<String, String> error = new HashMap<String, String>();
             error.put("error", "Reserva no encontrada");
             renderJSON(error);
@@ -589,12 +600,14 @@ public class Application extends Controller {
         }
 
         if (!yo.id.equals(reserva.alumno.id) && !yo.id.equals(reserva.profesor.id)) {
+            Logger.warn("[video] No autorizado reservaId=%s usuario=%s", reservaId, yo.username);
             Map<String, String> error = new HashMap<String, String>();
             error.put("error", "No autorizado");
             renderJSON(error);
             return null;
         }
 
+        Logger.debug("[video] Acceso autorizado reservaId=%s usuario=%s rol=%s", reserva.id, yo.username, yo.rol);
         return reserva;
     }
 
@@ -602,12 +615,34 @@ public class Application extends Controller {
         if (sdp64 != null && !sdp64.trim().isEmpty()) {
             try {
                 String normalized = normalizeBase64Url(sdp64.trim());
-                return new String(Base64.decodeBase64(normalized), "UTF-8");
+                String decoded = new String(Base64.decodeBase64(normalized), "UTF-8");
+                decoded = normalizeSdpString(decoded);
+                Logger.debug("[video] decodeSdp usando sdp64 size=%s decoded=%s", sdp64.length(), decoded.length());
+                return decoded;
             } catch (Exception e) {
+                Logger.error(e, "[video] Error decodificando sdp64");
                 return null;
             }
         }
+        if (sdp != null) {
+            return normalizeSdpString(sdp);
+        }
+        Logger.debug("[video] decodeSdp usando sdp plano size=%s", sdp != null ? sdp.length() : null);
         return sdp;
+    }
+
+    private static String normalizeSdpString(String sdp) {
+        if (sdp == null) {
+            return null;
+        }
+        String normalized = sdp;
+        normalized = normalized.replace("\\\\r\\\\n", "\r\n");
+        normalized = normalized.replace("\\\\n", "\n");
+        normalized = normalized.replace("\\\\r", "\r");
+        normalized = normalized.replace("\\r\\n", "\r\n");
+        normalized = normalized.replace("\\n", "\n");
+        normalized = normalized.replace("\\r", "\r");
+        return normalized;
     }
 
     private static String normalizeBase64Url(String value) {
