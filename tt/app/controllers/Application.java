@@ -599,12 +599,22 @@ public class Application extends Controller {
     private static String decodeSdp(String sdp, String sdp64) {
         if (sdp64 != null && !sdp64.trim().isEmpty()) {
             try {
-                return new String(Base64.decodeBase64(sdp64.trim()), "UTF-8");
+                String normalized = normalizeBase64Url(sdp64.trim());
+                return new String(Base64.decodeBase64(normalized), "UTF-8");
             } catch (Exception e) {
                 return null;
             }
         }
         return sdp;
+    }
+
+    private static String normalizeBase64Url(String value) {
+        String normalized = value.replace('-', '+').replace('_', '/');
+        int padding = normalized.length() % 4;
+        if (padding > 0) {
+            normalized = normalized + "====".substring(padding);
+        }
+        return normalized;
     }
 
     // --- CONSULTAS PERSONALIZADAS ---
