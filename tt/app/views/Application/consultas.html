@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Consultas personalizadas</title>
+    <link rel="stylesheet" media="screen" href="@{'/public/stylesheets/main.css'}">
     <style>
         :root { color-scheme: light; }
         body {
@@ -144,6 +145,10 @@
 <body>
 <header class="top-bar">
     <div class="brand">
+        <div class="page-logo">
+            <img class="logo" src="@{'/public/images/logo.svg'}" alt="Clases online">
+            <span>Clases online</span>
+        </div>
         <strong>Consultas de la base de datos</strong>
         <span>${yo.fullName}</span>
     </div>
@@ -172,6 +177,9 @@
                         <option value="totalProfesores" #{if 'totalProfesores'.equals(tipo)}selected#{/if}>Profesores registrados</option>
                         <option value="profesoresMateria" #{if 'profesoresMateria'.equals(tipo)}selected#{/if}>Profesores por materia</option>
                         <option value="alumnosMateria" #{if 'alumnosMateria'.equals(tipo)}selected#{/if}>Alumnos por materia</option>
+                        <option value="reservasPorMateria" #{if 'reservasPorMateria'.equals(tipo)}selected#{/if}>Reservas por materia</option>
+                        <option value="topAlumnos" #{if 'topAlumnos'.equals(tipo)}selected#{/if}>Alumnos con más reservas</option>
+                        <option value="topProfesores" #{if 'topProfesores'.equals(tipo)}selected#{/if}>Profesores con más alumnos</option>
                     </select>
                 </div>
                 <div class="field" id="materiaField">
@@ -192,16 +200,28 @@
         #{if error}
             <div class="card feedback error">${error}</div>
         #{/if}
-        #{elseif resultado != null}
+        #{elseif resultado != null || (ranking && ranking.size() > 0)}
             <section class="card results">
-                <div>
-                    <div class="result-number">${resultado}</div>
+                #{if resultado != null}
+                    <div>
+                        <div class="result-number">${resultado}</div>
+                        <div>${descripcion}</div>
+                    </div>
+                #{/if}
+                #{elseif descripcion}
                     <div>${descripcion}</div>
-                </div>
+                #{/elseif}
                 #{if detalleUsuarios && detalleUsuarios.size() > 0}
                     <div class="user-list">
                         #{list items:detalleUsuarios, as:'usuario'}
                             <div class="user-item">${usuario.fullName} · ${usuario.username}</div>
+                        #{/list}
+                    </div>
+                #{/if}
+                #{if ranking && ranking.size() > 0}
+                    <div class="user-list">
+                        #{list items:ranking, as:'item'}
+                            <div class="user-item">${item.label} · ${item.count}</div>
                         #{/list}
                     </div>
                 #{/if}
