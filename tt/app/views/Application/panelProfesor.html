@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Panel del Profesor</title>
+    <link rel="stylesheet" media="screen" href="@{'/public/stylesheets/main.css'}">
     <style>
         body {
             font-family: "Segoe UI", sans-serif;
@@ -152,11 +153,15 @@
 <body>
 <header class="top-bar">
     <div class="brand">
-        <strong>Clases online</strong>
+        <div class="page-logo">
+            <img class="logo" src="@{'/public/images/logo.svg'}" alt="Clases online">
+            <span>Clases online</span>
+        </div>
         <span>Hola, ${profesor.fullName}</span>
     </div>
     <div class="actions">
         <a class="btn secondary" href="@{Application.consultas()}">Consultas personalizadas</a>
+        <a class="btn secondary" href="@{Application.gestion()}">Gestión académica</a>
         <a class="btn" href="@{Application.reservas()}">Reservas de clase</a>
         <a class="btn logout" href="@{Application.logout()}">Cerrar sesión</a>
     </div>
