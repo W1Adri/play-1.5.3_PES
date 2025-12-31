@@ -1,0 +1,28 @@
+:root {
+    color-scheme: light;
+}
+
+body {
+    font-family: "Segoe UI", sans-serif;
+}
+
+img.logo {
+    max-height: 42px;
+    display: block;
+}
+
+.page-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.page-logo span {
+    font-weight: 700;
+    color: #22435f;
+}
+
+.form-note {
+    font-size: 12px;
+    color: #6b7c8c;
+}

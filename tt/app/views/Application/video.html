@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Clase en vídeo</title>
+    <link rel="stylesheet" media="screen" href="@{'/public/stylesheets/main.css'}">
     <style>
         :root {
             color-scheme: light;
@@ -109,6 +110,10 @@
 <body>
 <header>
     <div>
+        <div class="page-logo">
+            <img class="logo" src="@{'/public/images/logo.svg'}" alt="Clases online">
+            <span>Clases online</span>
+        </div>
         <h1>Clase en vídeo - ${reserva.materia.nombre}</h1>
         <span>Conecta con ${yo.rol == models.Rol.ALUMNO ? reserva.profesor.fullName : reserva.alumno.fullName}</span>
     </div>
@@ -171,6 +176,7 @@
     }
 
     function post(url, body) {
+        console.debug('[video] POST', url, body);
         return fetch(url, {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -178,25 +184,83 @@
         }).then(r => r.json());
     }
 
+    function encodeSdp(value) {
+        let encoded;
+        try {
+            encoded = btoa(value);
+        } catch (e) {
+            encoded = btoa(unescape(encodeURIComponent(value)));
+        }
+        return encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+    }
+
+    function normalizeSdp(value) {
+        if (!value) return value;
+        let normalized = value;
+        normalized = normalized.replace(/\\r\\n/g, '\r\n');
+        normalized = normalized.replace(/\\n/g, '\n');
+        return normalized;
+    }
+
     async function prepararConexion() {
-        pc = new RTCPeerConnection({
-            iceServers: [{urls: 'stun:stun.l.google.com:19302'}]
-        });
+        #{if turnUrls}
+        const turnUrls = "${turnUrls}";
+        #{/if}
+        #{else}
+        const turnUrls = "";
+        #{/else}
+        #{if turnUsername}
+        const turnUsername = "${turnUsername}";
+        #{/if}
+        #{else}
+        const turnUsername = "";
+        #{/else}
+        #{if turnCredential}
+        const turnCredential = "${turnCredential}";
+        #{/if}
+        #{else}
+        const turnCredential = "";
+        #{/else}
+
+        const iceServers = [{
+            urls: [
+                'stun:stun1.l.google.com:19302',
+                'stun:stun2.l.google.com:19302'
+            ]
+        }];
+
+        if (turnUrls) {
+            const urls = turnUrls.split(',').map(item => item.trim()).filter(Boolean);
+            const turnServer = {urls: urls};
+            if (turnUsername) {
+                turnServer.username = turnUsername;
+            }
+            if (turnCredential) {
+                turnServer.credential = turnCredential;
+            }
+            iceServers.push(turnServer);
+        }
+
+        pc = new RTCPeerConnection({iceServers: iceServers});
+        console.debug('[video] RTCPeerConnection creada', {iceServers: iceServers});
 
         pc.ontrack = (event) => {
             if (event.streams && event.streams[0]) {
                 remoteVideo.srcObject = event.streams[0];
+                console.debug('[video] Remote stream recibido', event.streams[0]);
             }
         };
 
         pc.onconnectionstatechange = () => {
             if (!pc) return;
             updateStatus('Estado de la conexión: ' + pc.connectionState);
+            console.debug('[video] connectionState', pc.connectionState);
         };
 
         localStream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
         localVideo.srcObject = localStream;
         localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+        console.debug('[video] Local stream listo', localStream);
     }
 
     function esperarIce() {
@@ -209,6 +273,7 @@
                 if (!pc) return;
                 if (pc.iceGatheringState === 'complete') {
                     pc.removeEventListener('icegatheringstatechange', checkState);
+                    console.debug('[video] ICE gathering completo');
                     resolve();
                 }
             }
@@ -218,19 +283,22 @@
 
     async function iniciarProfesor() {
         updateStatus('Preparando oferta de conexión...');
+        console.debug('[video] Profesor: creando oferta');
         await post(resetUrl, 'dummy=1');
         const offer = await pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true});
         await pc.setLocalDescription(offer);
         await esperarIce();
-        await post(offerPostUrl, 'sdp=' + encodeURIComponent(pc.localDescription.sdp));
+        await post(offerPostUrl, 'sdp64=' + encodeURIComponent(encodeSdp(pc.localDescription.sdp)));
         updateStatus('Oferta enviada. Esperando respuesta del alumno...');
+        console.debug('[video] Oferta enviada');
         polling = true;
         while (activo && polling) {
             await delay(2000);
             const respuesta = await fetch(answerGetUrl).then(r => r.json());
             if (respuesta && respuesta.sdp) {
-                await pc.setRemoteDescription({type: 'answer', sdp: respuesta.sdp});
+                await pc.setRemoteDescription({type: 'answer', sdp: normalizeSdp(respuesta.sdp)});
                 updateStatus('Respuesta recibida. Conectando...');
+                console.debug('[video] Answer recibido');
                 polling = false;
             }
         }
@@ -238,18 +306,21 @@
 
     async function iniciarAlumno() {
         updateStatus('Esperando la oferta del profesor...');
+        console.debug('[video] Alumno: esperando oferta');
         polling = true;
         while (activo && polling) {
             await delay(2000);
             const oferta = await fetch(offerGetUrl).then(r => r.json());
             if (oferta && oferta.sdp) {
-                await pc.setRemoteDescription({type: 'offer', sdp: oferta.sdp});
+                await pc.setRemoteDescription({type: 'offer', sdp: normalizeSdp(oferta.sdp)});
                 updateStatus('Oferta recibida. Generando respuesta...');
+                console.debug('[video] Oferta recibida');
                 const answer = await pc.createAnswer();
                 await pc.setLocalDescription(answer);
                 await esperarIce();
-                await post(answerPostUrl, 'sdp=' + encodeURIComponent(pc.localDescription.sdp));
+                await post(answerPostUrl, 'sdp64=' + encodeURIComponent(encodeSdp(pc.localDescription.sdp)));
                 updateStatus('Respuesta enviada. Esperando conexión...');
+                console.debug('[video] Answer enviada');
                 polling = false;
             }
         }
@@ -270,6 +341,7 @@
                 await iniciarAlumno();
             }
         } catch (err) {
+            console.error('[video] Error en sesión', err);
             console.error(err);
             limpiarSesion('No se pudo establecer la conexión: ' + err.message);
             try { await post(resetUrl, 'dummy=1'); } catch (e) {}
