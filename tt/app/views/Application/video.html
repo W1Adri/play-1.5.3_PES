@@ -183,6 +183,14 @@
         }).then(r => r.json());
     }
 
+    function encodeSdp(value) {
+        try {
+            return btoa(value);
+        } catch (e) {
+            return btoa(unescape(encodeURIComponent(value)));
+        }
+    }
+
     async function prepararConexion() {
         #{if turnUrls}
         const turnUrls = "${turnUrls}";
@@ -263,7 +271,7 @@
         const offer = await pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true});
         await pc.setLocalDescription(offer);
         await esperarIce();
-        await post(offerPostUrl, 'sdp=' + encodeURIComponent(pc.localDescription.sdp));
+        await post(offerPostUrl, 'sdp64=' + encodeURIComponent(encodeSdp(pc.localDescription.sdp)));
         updateStatus('Oferta enviada. Esperando respuesta del alumno...');
         polling = true;
         while (activo && polling) {
@@ -289,7 +297,7 @@
                 const answer = await pc.createAnswer();
                 await pc.setLocalDescription(answer);
                 await esperarIce();
-                await post(answerPostUrl, 'sdp=' + encodeURIComponent(pc.localDescription.sdp));
+                await post(answerPostUrl, 'sdp64=' + encodeURIComponent(encodeSdp(pc.localDescription.sdp)));
                 updateStatus('Respuesta enviada. Esperando conexión...');
                 polling = false;
             }

@@ -5,6 +5,7 @@ import play.mvc.Controller;
 import play.mvc.Before; // Importar @Before
 import play.libs.Crypto; // Importar Crypto para contraseñas
 import play.Play;
+import org.apache.commons.codec.binary.Base64;
 import java.util.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -502,18 +503,19 @@ public class Application extends Controller {
         renderJSON(resp);
     }
 
-    public static void publicarOffer(Long reservaId, String sdp) {
+    public static void publicarOffer(Long reservaId, String sdp, String sdp64) {
         Reserva reserva = obtenerReservaAutorizada(reservaId);
         if (reserva == null) return;
 
-        if (sdp == null || sdp.trim().isEmpty()) {
+        String decoded = decodeSdp(sdp, sdp64);
+        if (decoded == null || decoded.trim().isEmpty()) {
             Map<String, String> error = new HashMap<String, String>();
             error.put("error", "SDP vacío");
             renderJSON(error);
             return;
         }
 
-        reserva.offerSdp = sdp.trim();
+        reserva.offerSdp = decoded.trim();
         reserva.offerActualizada = new Date();
         reserva.answerSdp = null;
         reserva.answerActualizada = null;
@@ -524,18 +526,19 @@ public class Application extends Controller {
         renderJSON(resp);
     }
 
-    public static void publicarAnswer(Long reservaId, String sdp) {
+    public static void publicarAnswer(Long reservaId, String sdp, String sdp64) {
         Reserva reserva = obtenerReservaAutorizada(reservaId);
         if (reserva == null) return;
 
-        if (sdp == null || sdp.trim().isEmpty()) {
+        String decoded = decodeSdp(sdp, sdp64);
+        if (decoded == null || decoded.trim().isEmpty()) {
             Map<String, String> error = new HashMap<String, String>();
             error.put("error", "SDP vacío");
             renderJSON(error);
             return;
         }
 
-        reserva.answerSdp = sdp.trim();
+        reserva.answerSdp = decoded.trim();
         reserva.answerActualizada = new Date();
         reserva.save();
 
@@ -591,6 +594,17 @@ public class Application extends Controller {
         }
 
         return reserva;
+    }
+
+    private static String decodeSdp(String sdp, String sdp64) {
+        if (sdp64 != null && !sdp64.trim().isEmpty()) {
+            try {
+                return new String(Base64.decodeBase64(sdp64.trim()), "UTF-8");
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return sdp;
     }
 
     // --- CONSULTAS PERSONALIZADAS ---
