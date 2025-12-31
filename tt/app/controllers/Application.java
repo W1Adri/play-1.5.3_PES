@@ -616,6 +616,7 @@ public class Application extends Controller {
             try {
                 String normalized = normalizeBase64Url(sdp64.trim());
                 String decoded = new String(Base64.decodeBase64(normalized), "UTF-8");
+                decoded = normalizeSdpString(decoded);
                 Logger.debug("[video] decodeSdp usando sdp64 size=%s decoded=%s", sdp64.length(), decoded.length());
                 return decoded;
             } catch (Exception e) {
@@ -623,8 +624,25 @@ public class Application extends Controller {
                 return null;
             }
         }
+        if (sdp != null) {
+            return normalizeSdpString(sdp);
+        }
         Logger.debug("[video] decodeSdp usando sdp plano size=%s", sdp != null ? sdp.length() : null);
         return sdp;
+    }
+
+    private static String normalizeSdpString(String sdp) {
+        if (sdp == null) {
+            return null;
+        }
+        String normalized = sdp;
+        normalized = normalized.replace("\\\\r\\\\n", "\r\n");
+        normalized = normalized.replace("\\\\n", "\n");
+        normalized = normalized.replace("\\\\r", "\r");
+        normalized = normalized.replace("\\r\\n", "\r\n");
+        normalized = normalized.replace("\\n", "\n");
+        normalized = normalized.replace("\\r", "\r");
+        return normalized;
     }
 
     private static String normalizeBase64Url(String value) {
