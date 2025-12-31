@@ -194,6 +194,14 @@
         return encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
     }
 
+    function normalizeSdp(value) {
+        if (!value) return value;
+        let normalized = value;
+        normalized = normalized.replace(/\\r\\n/g, '\r\n');
+        normalized = normalized.replace(/\\n/g, '\n');
+        return normalized;
+    }
+
     async function prepararConexion() {
         #{if turnUrls}
         const turnUrls = "${turnUrls}";
@@ -288,7 +296,7 @@
             await delay(2000);
             const respuesta = await fetch(answerGetUrl).then(r => r.json());
             if (respuesta && respuesta.sdp) {
-                await pc.setRemoteDescription({type: 'answer', sdp: respuesta.sdp});
+                await pc.setRemoteDescription({type: 'answer', sdp: normalizeSdp(respuesta.sdp)});
                 updateStatus('Respuesta recibida. Conectando...');
                 console.debug('[video] Answer recibido');
                 polling = false;
@@ -304,7 +312,7 @@
             await delay(2000);
             const oferta = await fetch(offerGetUrl).then(r => r.json());
             if (oferta && oferta.sdp) {
-                await pc.setRemoteDescription({type: 'offer', sdp: oferta.sdp});
+                await pc.setRemoteDescription({type: 'offer', sdp: normalizeSdp(oferta.sdp)});
                 updateStatus('Oferta recibida. Generando respuesta...');
                 console.debug('[video] Oferta recibida');
                 const answer = await pc.createAnswer();

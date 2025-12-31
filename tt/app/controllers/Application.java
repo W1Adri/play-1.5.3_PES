@@ -507,7 +507,8 @@ public class Application extends Controller {
         Reserva reserva = obtenerReservaAutorizada(reservaId);
         if (reserva == null) return;
 
-        String decoded = decodeSdp(sdp, sdp64);
+        String[] rawParams = extractSdpParams(sdp, sdp64);
+        String decoded = decodeSdp(rawParams[0], rawParams[1]);
         if (decoded == null || decoded.trim().isEmpty()) {
             Map<String, String> error = new HashMap<String, String>();
             error.put("error", "SDP vacío");
@@ -530,7 +531,8 @@ public class Application extends Controller {
         Reserva reserva = obtenerReservaAutorizada(reservaId);
         if (reserva == null) return;
 
-        String decoded = decodeSdp(sdp, sdp64);
+        String[] rawParams = extractSdpParams(sdp, sdp64);
+        String decoded = decodeSdp(rawParams[0], rawParams[1]);
         if (decoded == null || decoded.trim().isEmpty()) {
             Map<String, String> error = new HashMap<String, String>();
             error.put("error", "SDP vacío");
@@ -615,6 +617,64 @@ public class Application extends Controller {
             normalized = normalized + "====".substring(padding);
         }
         return normalized;
+    }
+
+    private static String[] extractSdpParams(String sdp, String sdp64) {
+        String resolvedSdp = firstNonBlank(sdp, params.get("sdp"));
+        String resolvedSdp64 = firstNonBlank(sdp64, params.get("sdp64"));
+
+        if ((resolvedSdp == null || resolvedSdp64 == null) && request != null && request.body != null) {
+            String body = readRequestBody();
+            if (body != null && !body.trim().isEmpty()) {
+                if (resolvedSdp == null) {
+                    resolvedSdp = extractFormValue(body, "sdp");
+                }
+                if (resolvedSdp64 == null) {
+                    resolvedSdp64 = extractFormValue(body, "sdp64");
+                }
+            }
+        }
+
+        return new String[] { resolvedSdp, resolvedSdp64 };
+    }
+
+    private static String readRequestBody() {
+        try {
+            return play.libs.IO.readContentAsString(request.body);
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
+    private static String extractFormValue(String body, String key) {
+        String[] pairs = body.split("&");
+        for (String pair : pairs) {
+            int idx = pair.indexOf('=');
+            if (idx <= 0) continue;
+            String name = pair.substring(0, idx);
+            if (!key.equals(name)) continue;
+            String value = pair.substring(idx + 1);
+            return decodeUrlComponent(value);
+        }
+        return null;
+    }
+
+    private static String decodeUrlComponent(String value) {
+        try {
+            return java.net.URLDecoder.decode(value, "UTF-8");
+        } catch (Exception ex) {
+            return value;
+        }
+    }
+
+    private static String firstNonBlank(String first, String second) {
+        if (first != null && !first.trim().isEmpty()) {
+            return first;
+        }
+        if (second != null && !second.trim().isEmpty()) {
+            return second;
+        }
+        return null;
     }
 
     // --- CONSULTAS PERSONALIZADAS ---
