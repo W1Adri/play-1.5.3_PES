@@ -215,8 +215,12 @@
     function normalizeSdp(value) {
         if (!value) return value;
         let normalized = value;
+        normalized = normalized.replace(/\\\\r\\\\n/g, '\r\n');
+        normalized = normalized.replace(/\\\\n/g, '\n');
+        normalized = normalized.replace(/\\\\r/g, '\r');
         normalized = normalized.replace(/\\r\\n/g, '\r\n');
         normalized = normalized.replace(/\\n/g, '\n');
+        normalized = normalized.replace(/\\r/g, '\r');
         return normalized;
     }
 
