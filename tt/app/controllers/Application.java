@@ -154,6 +154,228 @@ public class Application extends Controller {
                 totalUsuarios, totalAlumnos, totalProfesores);
     }
 
+    // --- GESTIÓN DE USUARIOS Y MATERIAS (PROFESOR) ---
+    public static void gestion() {
+        Usuario profesor = connected();
+        if (profesor == null) {
+            session.clear();
+            flash.error("Debes iniciar sesión nuevamente.");
+            index();
+            return;
+        }
+        if (profesor.rol != Rol.PROFESOR) {
+            flash.error("Acceso no autorizado.");
+            logout();
+        }
+
+        List<Usuario> usuarios = Usuario.findAll();
+        List<Materia> materias = Materia.findAll();
+        renderTemplate("Application/gestion.html", profesor, usuarios, materias);
+    }
+
+    public static void actualizarUsuario(Long id, String username, String email, String fullName, String rol) {
+        Usuario profesor = connected();
+        if (profesor == null) {
+            session.clear();
+            flash.error("Debes iniciar sesión nuevamente.");
+            index();
+            return;
+        }
+        if (profesor.rol != Rol.PROFESOR) {
+            flash.error("Acceso no autorizado.");
+            logout();
+        }
+
+        Usuario usuario = Usuario.findById(id);
+        if (usuario == null) {
+            flash.error("Usuario no encontrado.");
+            gestion();
+            return;
+        }
+
+        if (username == null || username.trim().isEmpty()) {
+            flash.error("El nombre de usuario no puede estar vacío.");
+            gestion();
+            return;
+        }
+        if (email == null || email.trim().isEmpty()) {
+            flash.error("El email no puede estar vacío.");
+            gestion();
+            return;
+        }
+        if (fullName == null || fullName.trim().isEmpty()) {
+            flash.error("El nombre completo no puede estar vacío.");
+            gestion();
+            return;
+        }
+
+        username = username.trim().toLowerCase();
+        email = email.trim().toLowerCase();
+        fullName = fullName.trim();
+
+        Usuario existenteUsername = Usuario.find("byUsername", username).first();
+        if (existenteUsername != null && !existenteUsername.id.equals(usuario.id)) {
+            flash.error("El nombre de usuario ya está en uso.");
+            gestion();
+            return;
+        }
+
+        Usuario existenteEmail = Usuario.find("byEmail", email).first();
+        if (existenteEmail != null && !existenteEmail.id.equals(usuario.id)) {
+            flash.error("El email ya está en uso.");
+            gestion();
+            return;
+        }
+
+        Rol rolEnum;
+        if ("alumno".equalsIgnoreCase(rol)) {
+            rolEnum = Rol.ALUMNO;
+        } else if ("profesor".equalsIgnoreCase(rol)) {
+            rolEnum = Rol.PROFESOR;
+        } else {
+            flash.error("Rol inválido.");
+            gestion();
+            return;
+        }
+
+        usuario.username = username;
+        usuario.email = email;
+        usuario.fullName = fullName;
+        usuario.rol = rolEnum;
+        usuario.save();
+
+        flash.success("Usuario actualizado correctamente.");
+        gestion();
+    }
+
+    public static void eliminarUsuario(Long id) {
+        Usuario profesor = connected();
+        if (profesor == null) {
+            session.clear();
+            flash.error("Debes iniciar sesión nuevamente.");
+            index();
+            return;
+        }
+        if (profesor.rol != Rol.PROFESOR) {
+            flash.error("Acceso no autorizado.");
+            logout();
+        }
+
+        Usuario usuario = Usuario.findById(id);
+        if (usuario == null) {
+            flash.error("Usuario no encontrado.");
+            gestion();
+            return;
+        }
+
+        if (usuario.id.equals(profesor.id)) {
+            flash.error("No puedes eliminar tu propio usuario.");
+            gestion();
+            return;
+        }
+
+        long inscripcionesAlumno = Inscripcion.count("alumno = ?1", usuario);
+        long inscripcionesProfesor = Inscripcion.count("profesor = ?1", usuario);
+        long reservasAlumno = Reserva.count("alumno = ?1", usuario);
+        long reservasProfesor = Reserva.count("profesor = ?1", usuario);
+        long mensajesEnviados = Mensaje.count("emisor = ?1", usuario);
+        long mensajesRecibidos = Mensaje.count("receptor = ?1", usuario);
+
+        if (inscripcionesAlumno + inscripcionesProfesor + reservasAlumno + reservasProfesor + mensajesEnviados + mensajesRecibidos > 0) {
+            flash.error("No se puede eliminar: el usuario tiene relaciones activas.");
+            gestion();
+            return;
+        }
+
+        usuario.delete();
+        flash.success("Usuario eliminado correctamente.");
+        gestion();
+    }
+
+    public static void actualizarMateria(Long id, String codigo, String nombre, String descripcion) {
+        Usuario profesor = connected();
+        if (profesor == null) {
+            session.clear();
+            flash.error("Debes iniciar sesión nuevamente.");
+            index();
+            return;
+        }
+        if (profesor.rol != Rol.PROFESOR) {
+            flash.error("Acceso no autorizado.");
+            logout();
+        }
+
+        Materia materia = Materia.findById(id);
+        if (materia == null) {
+            flash.error("Materia no encontrada.");
+            gestion();
+            return;
+        }
+
+        if (codigo == null || codigo.trim().isEmpty()) {
+            flash.error("El código no puede estar vacío.");
+            gestion();
+            return;
+        }
+        if (nombre == null || nombre.trim().isEmpty()) {
+            flash.error("El nombre no puede estar vacío.");
+            gestion();
+            return;
+        }
+
+        codigo = codigo.trim().toUpperCase();
+        nombre = nombre.trim();
+        descripcion = descripcion != null ? descripcion.trim() : null;
+
+        Materia existente = Materia.find("byCodigo", codigo).first();
+        if (existente != null && !existente.id.equals(materia.id)) {
+            flash.error("El código ya está en uso.");
+            gestion();
+            return;
+        }
+
+        materia.codigo = codigo;
+        materia.nombre = nombre;
+        materia.descripcion = descripcion;
+        materia.save();
+
+        flash.success("Materia actualizada correctamente.");
+        gestion();
+    }
+
+    public static void eliminarMateria(Long id) {
+        Usuario profesor = connected();
+        if (profesor == null) {
+            session.clear();
+            flash.error("Debes iniciar sesión nuevamente.");
+            index();
+            return;
+        }
+        if (profesor.rol != Rol.PROFESOR) {
+            flash.error("Acceso no autorizado.");
+            logout();
+        }
+
+        Materia materia = Materia.findById(id);
+        if (materia == null) {
+            flash.error("Materia no encontrada.");
+            gestion();
+            return;
+        }
+
+        long inscripciones = Inscripcion.count("materia = ?1", materia);
+        long reservas = Reserva.count("materia = ?1", materia);
+        if (inscripciones + reservas > 0) {
+            flash.error("No se puede eliminar: la materia tiene relaciones activas.");
+            gestion();
+            return;
+        }
+
+        materia.delete();
+        flash.success("Materia eliminada correctamente.");
+        gestion();
+    }
+
     // --- RESERVAS DE CLASE ---
     public static void reservas() {
         Usuario yo = connected();
