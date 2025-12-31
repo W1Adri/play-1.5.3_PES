@@ -18,6 +18,11 @@ GET     /logout                             Application.logout
 # --- Paneles de Usuario ---
 GET     /panel/alumno                       Application.panelAlumno
 GET     /panel/profesor                     Application.panelProfesor
+GET     /panel/gestion                      Application.gestion
+POST    /panel/gestion/usuarios/actualizar  Application.actualizarUsuario(id, username, email, fullName, rol)
+POST    /panel/gestion/usuarios/eliminar    Application.eliminarUsuario(id)
+POST    /panel/gestion/materias/actualizar  Application.actualizarMateria(id, codigo, nombre, descripcion)
+POST    /panel/gestion/materias/eliminar    Application.eliminarMateria(id)
 GET     /consultas                          Application.consultas(tipo, materiaId)
 GET     /reservas                           Application.reservas
 POST    /reservas/crear                     Application.crearReserva(inscripcionId, fecha, hora)

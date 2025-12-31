@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Chat entre ${alumno.username} y ${profesor.username}</title>
+    <link rel="stylesheet" media="screen" href="@{'/public/stylesheets/main.css'}">
     <style>
         :root { color-scheme: light; }
         body {
@@ -176,6 +177,9 @@
 <body data-yo="${yo.id}" data-alumno="${alumno.id}" data-profesor="${profesor.id}">
 <header class="top-bar">
     <div class="participants">
+        <div class="page-logo">
+            <img class="logo" src="@{'/public/images/logo.svg'}" alt="Clases online">
+        </div>
         #{if yo.id == alumno.id}
             <a class="back" href="@{Application.panelAlumno()}">← Volver</a>
         #{/if}
