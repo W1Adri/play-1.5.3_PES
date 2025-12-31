@@ -601,6 +601,7 @@ public class Application extends Controller {
         String descripcion = null;
         String error = null;
         List<Usuario> detalleUsuarios = new ArrayList<Usuario>();
+        List<Map<String, Object>> ranking = new ArrayList<Map<String, Object>>();
 
         if (tipo != null && !tipo.trim().isEmpty()) {
             tipo = tipo.trim();
@@ -640,13 +641,48 @@ public class Application extends Controller {
                         }
                     }
                 }
+            } else if ("reservasPorMateria".equals(tipo)) {
+                List<Object[]> filas = Reserva.find(
+                        "select r.materia.nombre, count(r) from Reserva r group by r.materia.nombre order by count(r) desc"
+                ).fetch();
+                for (Object[] fila : filas) {
+                    Map<String, Object> item = new HashMap<String, Object>();
+                    item.put("label", fila[0]);
+                    item.put("count", fila[1]);
+                    ranking.add(item);
+                }
+                descripcion = "Reservas totales por materia";
+            } else if ("topAlumnos".equals(tipo)) {
+                List<Object[]> filas = Reserva.find(
+                        "select r.alumno.fullName, r.alumno.username, count(r) " +
+                                "from Reserva r group by r.alumno.id, r.alumno.fullName, r.alumno.username order by count(r) desc"
+                ).fetch();
+                for (Object[] fila : filas) {
+                    Map<String, Object> item = new HashMap<String, Object>();
+                    item.put("label", fila[0] + " · " + fila[1]);
+                    item.put("count", fila[2]);
+                    ranking.add(item);
+                }
+                descripcion = "Alumnos con más reservas";
+            } else if ("topProfesores".equals(tipo)) {
+                List<Object[]> filas = Inscripcion.find(
+                        "select i.profesor.fullName, i.profesor.username, count(i) " +
+                                "from Inscripcion i group by i.profesor.id, i.profesor.fullName, i.profesor.username order by count(i) desc"
+                ).fetch();
+                for (Object[] fila : filas) {
+                    Map<String, Object> item = new HashMap<String, Object>();
+                    item.put("label", fila[0] + " · " + fila[1]);
+                    item.put("count", fila[2]);
+                    ranking.add(item);
+                }
+                descripcion = "Profesores con más alumnos";
             } else {
                 error = "Consulta no reconocida.";
             }
         }
 
         renderTemplate("Application/consultas.html", yo, materias, tipo, materiaSeleccionada,
-                resultado, descripcion, detalleUsuarios, error);
+                resultado, descripcion, detalleUsuarios, ranking, error);
     }
 
     // --- DETALLE DE MATERIA ---

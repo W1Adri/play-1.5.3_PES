@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Gestión académica</title>
+    <link rel="stylesheet" media="screen" href="@{'/public/stylesheets/main.css'}">
     <style>
         body {
             font-family: "Segoe UI", sans-serif;
@@ -127,6 +128,10 @@
 <body>
 <header>
     <div>
+        <div class="page-logo">
+            <img class="logo" src="@{'/public/images/logo.svg'}" alt="Clases online">
+            <span>Clases online</span>
+        </div>
         <h1>Gestión académica</h1>
         <span>Profesor: ${profesor.fullName}</span>
     </div>

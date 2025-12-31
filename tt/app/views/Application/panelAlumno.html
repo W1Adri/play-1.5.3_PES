@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Panel del Alumno</title>
+    <link rel="stylesheet" media="screen" href="@{'/public/stylesheets/main.css'}">
     <style>
         :root {
             color-scheme: light;
@@ -180,7 +181,10 @@
 <body>
 <header class="top-bar">
     <div class="brand">
-        <strong>Clases online</strong>
+        <div class="page-logo">
+            <img class="logo" src="@{'/public/images/logo.svg'}" alt="Clases online">
+            <span>Clases online</span>
+        </div>
         <span>Hola, ${u.fullName}</span>
     </div>
     <div class="actions">
