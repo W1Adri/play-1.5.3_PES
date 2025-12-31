@@ -177,15 +177,15 @@
 
     function logSdpInfo(label, sdp) {
         const size = sdp ? sdp.length : 0;
-        console.debug(`[video] ${label} size=${size}`);
+        console.debug('[video] ' + label + ' size=' + size);
     }
 
     function logSdpContent(label, sdp) {
         if (!sdp) {
-            console.warn(`[video] ${label} SDP vacío`);
+            console.warn('[video] ' + label + ' SDP vacío');
             return;
         }
-        console.groupCollapsed(`[video] ${label} SDP (${sdp.length} chars)`);
+        console.groupCollapsed('[video] ' + label + ' SDP (' + sdp.length + ' chars)');
         console.log(sdp);
         console.groupEnd();
     }
