@@ -75,10 +75,14 @@ public class Application extends Controller {
         if (username == null || password == null) renderText("Faltan credenciales.");
         username = username.trim().toLowerCase();
 
-        String passwordHash = Crypto.passwordHash(password);
-        Usuario u = Usuario.find("byUsernameAndPasswordHash", username, passwordHash).first();
-
+        Usuario u = Usuario.find("byUsername", username).first();
         if (u == null) {
+            flash.error("Usuario o contraseña incorrectos");
+            index();
+        }
+
+        String passwordHash = Crypto.passwordHash(password);
+        if (!passwordHash.equals(u.passwordHash)) {
             flash.error("Usuario o contraseña incorrectos");
             index();
         }
