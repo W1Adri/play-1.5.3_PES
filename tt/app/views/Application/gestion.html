@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión académica</title>
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top left, #fff0d6 0%, #fff8ef 45%, #ffffff 100%);
+            margin: 0;
+            min-height: 100vh;
+        }
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 40px;
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 6px 20px rgba(217, 145, 71, 0.12);
+        }
+        header h1 {
+            margin: 0;
+            color: #704b2f;
+            font-size: 20px;
+        }
+        header span {
+            color: #8b6242;
+            font-size: 14px;
+        }
+        .actions {
+            display: flex;
+            gap: 12px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 16px;
+            border-radius: 999px;
+            border: none;
+            font-weight: 600;
+            text-decoration: none;
+            color: white;
+            background: linear-gradient(135deg, #f39c12, #d35400);
+            box-shadow: 0 4px 12px rgba(241, 154, 43, 0.35);
+        }
+        .btn.secondary {
+            background: transparent;
+            color: #8b6242;
+            border: 1px solid rgba(241, 154, 43, 0.4);
+            box-shadow: none;
+        }
+        .btn.danger {
+            background: linear-gradient(135deg, #ff6b6b, #d1456b);
+            box-shadow: 0 4px 12px rgba(209, 69, 107, 0.35);
+        }
+        main {
+            max-width: 1200px;
+            margin: 32px auto 60px;
+            padding: 0 24px;
+            display: grid;
+            gap: 24px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 20px 45px rgba(112, 75, 47, 0.12);
+        }
+        .card h2 {
+            margin-top: 0;
+            color: #704b2f;
+        }
+        .grid {
+            display: grid;
+            gap: 16px;
+        }
+        .row {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            align-items: center;
+            padding: 16px;
+            border-radius: 14px;
+            background: rgba(241, 154, 43, 0.08);
+        }
+        label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #8b6242;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(112, 75, 47, 0.25);
+            font-size: 14px;
+            background: #fff;
+        }
+        textarea {
+            resize: vertical;
+        }
+        .inline-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .flash {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .flash.success {
+            background: #eafbea;
+            border: 1px solid #2ecc71;
+            color: #2e7d32;
+        }
+        .flash.error {
+            background: #fdecea;
+            border: 1px solid #e74c3c;
+            color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div>
+        <h1>Gestión académica</h1>
+        <span>Profesor: ${profesor.fullName}</span>
+    </div>
+    <div class="actions">
+        <a class="btn secondary" href="@{Application.panelProfesor()}">Volver al panel</a>
+        <a class="btn danger" href="@{Application.logout()}">Cerrar sesión</a>
+    </div>
+</header>
+
+<main>
+    #{if flash.success}
+        <div class="flash success">${flash.success}</div>
+    #{/if}
+    #{if flash.error}
+        <div class="flash error">${flash.error}</div>
+    #{/if}
+
+    <section class="card">
+        <h2>Usuarios</h2>
+        <div class="grid">
+            #{list items:usuarios, as:'u'}
+                <form class="row" method="post" action="@{Application.actualizarUsuario()}">
+                    <input type="hidden" name="id" value="${u.id}">
+                    <div>
+                        <label>Usuario</label>
+                        <input type="text" name="username" value="${u.username}" required>
+                    </div>
+                    <div>
+                        <label>Email</label>
+                        <input type="email" name="email" value="${u.email}" required>
+                    </div>
+                    <div>
+                        <label>Nombre completo</label>
+                        <input type="text" name="fullName" value="${u.fullName}" required>
+                    </div>
+                    <div>
+                        <label>Rol</label>
+                        <select name="rol" required>
+                            <option value="alumno" ${u.rol == models.Rol.ALUMNO ? "selected" : ""}>Alumno</option>
+                            <option value="profesor" ${u.rol == models.Rol.PROFESOR ? "selected" : ""}>Profesor</option>
+                        </select>
+                    </div>
+                    <div class="inline-actions">
+                        <button class="btn" type="submit">Guardar</button>
+                    </div>
+                </form>
+                <form class="row" method="post" action="@{Application.eliminarUsuario()}">
+                    <input type="hidden" name="id" value="${u.id}">
+                    <div>
+                        <label>Eliminar usuario</label>
+                        <input type="text" value="Se eliminará ${u.username}" disabled>
+                    </div>
+                    <div class="inline-actions">
+                        <button class="btn danger" type="submit">Eliminar</button>
+                    </div>
+                </form>
+            #{/list}
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>Materias</h2>
+        <div class="grid">
+            #{list items:materias, as:'m'}
+                <form class="row" method="post" action="@{Application.actualizarMateria()}">
+                    <input type="hidden" name="id" value="${m.id}">
+                    <div>
+                        <label>Código</label>
+                        <input type="text" name="codigo" value="${m.codigo}" required>
+                    </div>
+                    <div>
+                        <label>Nombre</label>
+                        <input type="text" name="nombre" value="${m.nombre}" required>
+                    </div>
+                    <div>
+                        <label>Descripción</label>
+                        <textarea name="descripcion" rows="2">${m.descripcion}</textarea>
+                    </div>
+                    <div class="inline-actions">
+                        <button class="btn" type="submit">Guardar</button>
+                    </div>
+                </form>
+                <form class="row" method="post" action="@{Application.eliminarMateria()}">
+                    <input type="hidden" name="id" value="${m.id}">
+                    <div>
+                        <label>Eliminar materia</label>
+                        <input type="text" value="Se eliminará ${m.codigo}" disabled>
+                    </div>
+                    <div class="inline-actions">
+                        <button class="btn danger" type="submit">Eliminar</button>
+                    </div>
+                </form>
+            #{/list}
+        </div>
+    </section>
+</main>
+</body>
+</html>
