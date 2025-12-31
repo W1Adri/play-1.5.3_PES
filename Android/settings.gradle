@@ -1,0 +1,2 @@
+rootProject.name = "Play Framework WebApp"
+include ':app'
