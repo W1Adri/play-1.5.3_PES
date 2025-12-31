@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Clase en vídeo</title>
+    <link rel="stylesheet" media="screen" href="@{'/public/stylesheets/main.css'}">
     <style>
         :root {
             color-scheme: light;
@@ -109,6 +110,10 @@
 <body>
 <header>
     <div>
+        <div class="page-logo">
+            <img class="logo" src="@{'/public/images/logo.svg'}" alt="Clases online">
+            <span>Clases online</span>
+        </div>
         <h1>Clase en vídeo - ${reserva.materia.nombre}</h1>
         <span>Conecta con ${yo.rol == models.Rol.ALUMNO ? reserva.profesor.fullName : reserva.alumno.fullName}</span>
     </div>
@@ -179,9 +184,45 @@
     }
 
     async function prepararConexion() {
-        pc = new RTCPeerConnection({
-            iceServers: [{urls: 'stun:stun.l.google.com:19302'}]
-        });
+        #{if turnUrls}
+        const turnUrls = "${turnUrls}";
+        #{/if}
+        #{else}
+        const turnUrls = "";
+        #{/else}
+        #{if turnUsername}
+        const turnUsername = "${turnUsername}";
+        #{/if}
+        #{else}
+        const turnUsername = "";
+        #{/else}
+        #{if turnCredential}
+        const turnCredential = "${turnCredential}";
+        #{/if}
+        #{else}
+        const turnCredential = "";
+        #{/else}
+
+        const iceServers = [{
+            urls: [
+                'stun:stun1.l.google.com:19302',
+                'stun:stun2.l.google.com:19302'
+            ]
+        }];
+
+        if (turnUrls) {
+            const urls = turnUrls.split(',').map(item => item.trim()).filter(Boolean);
+            const turnServer = {urls: urls};
+            if (turnUsername) {
+                turnServer.username = turnUsername;
+            }
+            if (turnCredential) {
+                turnServer.credential = turnCredential;
+            }
+            iceServers.push(turnServer);
+        }
+
+        pc = new RTCPeerConnection({iceServers: iceServers});
 
         pc.ontrack = (event) => {
             if (event.streams && event.streams[0]) {
