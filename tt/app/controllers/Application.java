@@ -4,6 +4,7 @@ import models.*;
 import play.mvc.Controller;
 import play.mvc.Before; // Importar @Before
 import play.libs.Crypto; // Importar Crypto para contraseñas
+import play.Play;
 import java.util.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -479,7 +480,10 @@ public class Application extends Controller {
             return;
         }
 
-        renderTemplate("Application/video.html", yo, reserva);
+        String turnUrls = Play.configuration.getProperty("webrtc.turn.urls");
+        String turnUsername = Play.configuration.getProperty("webrtc.turn.username");
+        String turnCredential = Play.configuration.getProperty("webrtc.turn.credential");
+        renderTemplate("Application/video.html", yo, reserva, turnUrls, turnUsername, turnCredential);
     }
 
     public static void resetearSesionVideo(Long reservaId) {
