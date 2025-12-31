@@ -180,6 +180,16 @@
         console.debug(`[video] ${label} size=${size}`);
     }
 
+    function logSdpContent(label, sdp) {
+        if (!sdp) {
+            console.warn(`[video] ${label} SDP vacío`);
+            return;
+        }
+        console.groupCollapsed(`[video] ${label} SDP (${sdp.length} chars)`);
+        console.log(sdp);
+        console.groupEnd();
+    }
+
     function post(url, body) {
         console.debug('[video] POST', url, {bodyLength: body ? body.length : 0});
         return fetch(url, {
@@ -298,6 +308,7 @@
         const offer = await pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true});
         await pc.setLocalDescription(offer);
         logSdpInfo('Profesor localDescription', pc.localDescription && pc.localDescription.sdp);
+        logSdpContent('Profesor localDescription', pc.localDescription && pc.localDescription.sdp);
         await esperarIce();
         const offerPayload = 'sdp64=' + encodeURIComponent(encodeSdp(pc.localDescription.sdp));
         console.debug('[video] Profesor: enviando oferta', {payloadLength: offerPayload.length});
@@ -312,6 +323,7 @@
             console.debug('[video] Profesor: answer recibido', respuesta);
             if (respuesta && respuesta.sdp) {
                 logSdpInfo('Profesor answer recibido', respuesta.sdp);
+                logSdpContent('Profesor answer recibido', respuesta.sdp);
                 await pc.setRemoteDescription({type: 'answer', sdp: normalizeSdp(respuesta.sdp)});
                 updateStatus('Respuesta recibida. Conectando...');
                 console.debug('[video] Answer recibido');
@@ -331,12 +343,14 @@
             console.debug('[video] Alumno: oferta recibida', oferta);
             if (oferta && oferta.sdp) {
                 logSdpInfo('Alumno oferta recibida', oferta.sdp);
+                logSdpContent('Alumno oferta recibida', oferta.sdp);
                 await pc.setRemoteDescription({type: 'offer', sdp: normalizeSdp(oferta.sdp)});
                 updateStatus('Oferta recibida. Generando respuesta...');
                 console.debug('[video] Oferta recibida');
                 const answer = await pc.createAnswer();
                 await pc.setLocalDescription(answer);
                 logSdpInfo('Alumno localDescription', pc.localDescription && pc.localDescription.sdp);
+                logSdpContent('Alumno localDescription', pc.localDescription && pc.localDescription.sdp);
                 await esperarIce();
                 const answerPayload = 'sdp64=' + encodeURIComponent(encodeSdp(pc.localDescription.sdp));
                 console.debug('[video] Alumno: enviando answer', {payloadLength: answerPayload.length});
