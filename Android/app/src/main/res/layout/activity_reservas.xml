@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_reservas"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_glass"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Reservas de clase"
+                android:textStyle="bold"
+                android:textColor="@color/textPrimary"
+                android:textSize="18sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Gestiona tus próximas clases en vídeo"
+                android:textColor="@color/textSecondary"
+                android:layout_marginTop="4dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+
+                <Button
+                    android:id="@+id/reserva_back_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Volver"
+                    android:background="@drawable/bg_button_secondary"
+                    android:textColor="@color/textPrimary" />
+
+                <Button
+                    android:id="@+id/reserva_logout_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Cerrar sesión"
+                    android:background="@drawable/bg_button_danger"
+                    android:textColor="@android:color/white"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/reserva_flash"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:textColor="@color/textPrimary"
+            android:visibility="gone"
+            android:layout_marginTop="12dp" />
+
+        <LinearLayout
+            android:id="@+id/reserva_form_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card"
+            android:padding="18dp"
+            android:layout_marginTop="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🗓️ Crear una nueva reserva"
+                android:textStyle="bold"
+                android:textColor="@color/textPrimary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Selecciona la materia y compañero"
+                android:textColor="@color/textSecondary"
+                android:layout_marginTop="12dp" />
+
+            <Spinner
+                android:id="@+id/reserva_inscripcion_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_input" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fecha"
+                android:textColor="@color/textSecondary"
+                android:layout_marginTop="12dp" />
+
+            <TextView
+                android:id="@+id/reserva_fecha_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Selecciona fecha"
+                android:padding="12dp"
+                android:background="@drawable/bg_input"
+                android:textColor="@color/textPrimary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hora"
+                android:textColor="@color/textSecondary"
+                android:layout_marginTop="12dp" />
+
+            <TextView
+                android:id="@+id/reserva_hora_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Selecciona hora"
+                android:padding="12dp"
+                android:background="@drawable/bg_input"
+                android:textColor="@color/textPrimary" />
+
+            <Button
+                android:id="@+id/reserva_submit_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Guardar reserva"
+                android:textColor="@android:color/white"
+                android:background="@drawable/bg_button_primary"
+                android:layout_marginTop="12dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/reserva_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No hay inscripciones disponibles para reservar clases en este momento."
+            android:textColor="@color/textSecondary"
+            android:background="@drawable/bg_card"
+            android:padding="18dp"
+            android:visibility="gone"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Próximas clases"
+            android:textStyle="bold"
+            android:textColor="@color/textPrimary"
+            android:layout_marginTop="16dp" />
+
+        <LinearLayout
+            android:id="@+id/reserva_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="10dp" />
+    </LinearLayout>
+</ScrollView>

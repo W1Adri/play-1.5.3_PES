@@ -52,3 +52,23 @@ POST    /api/chat/enviar                    Application.enviarMensaje(receptorId
 
 # URL de la API para obtener mensajes nuevos (debe ser GET)
 GET     /api/chat/mensajes                  Application.obtenerMensajes(alumnoId, profesorId, lastId)
+
+# --- API Android (JSON) ---
+POST    /api/login                          Api.login
+POST    /api/register                       Api.register
+GET     /api/me                             Api.me
+GET     /api/panel/alumno                   Api.panelAlumno
+GET     /api/panel/profesor                 Api.panelProfesor
+GET     /api/materias                       Api.materias
+GET     /api/materias/{id}                  Api.materiaDetalle(id)
+POST    /api/inscripciones                  Api.inscribirse(materiaId, profesorId)
+GET     /api/reservas                       Api.reservas
+POST    /api/reservas                       Api.crearReserva(inscripcionId, fecha, hora)
+GET     /api/consultas                      Api.consultas(tipo, materiaId)
+GET     /api/gestion                        Api.gestion
+POST    /api/gestion/usuarios               Api.crearUsuario(username, password, email, fullName, rol)
+POST    /api/gestion/usuarios/actualizar    Api.actualizarUsuario(id, email, fullName, rol)
+POST    /api/gestion/usuarios/eliminar      Api.eliminarUsuario(id)
+POST    /api/gestion/materias/actualizar    Api.actualizarMateria(id, codigo, nombre, descripcion)
+POST    /api/gestion/materias/eliminar      Api.eliminarMateria(id)
+POST    /api/gestion/materias               Api.crearMateria(codigo, nombre, descripcion)

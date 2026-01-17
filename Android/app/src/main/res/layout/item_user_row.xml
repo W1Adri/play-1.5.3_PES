@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_card"
+    android:padding="16dp"
+    android:layout_marginBottom="12dp">
+
+    <EditText
+        android:id="@+id/user_row_username"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Usuario"
+        android:background="@drawable/bg_input"
+        android:padding="10dp" />
+
+    <EditText
+        android:id="@+id/user_row_email"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Email"
+        android:background="@drawable/bg_input"
+        android:padding="10dp"
+        android:layout_marginTop="8dp" />
+
+    <EditText
+        android:id="@+id/user_row_full_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Nombre completo"
+        android:background="@drawable/bg_input"
+        android:padding="10dp"
+        android:layout_marginTop="8dp" />
+
+    <Spinner
+        android:id="@+id/user_row_role"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_input"
+        android:layout_marginTop="8dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp">
+
+        <Button
+            android:id="@+id/user_row_save"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Guardar"
+            android:textColor="@android:color/white"
+            android:background="@drawable/bg_button_primary" />
+
+        <Button
+            android:id="@+id/user_row_delete"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Eliminar"
+            android:textColor="@android:color/white"
+            android:background="@drawable/bg_button_danger"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+</LinearLayout>

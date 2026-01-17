@@ -1,119 +1,198 @@
 package com.playframework.webapp;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.webkit.WebChromeClient;
-import android.view.KeyEvent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.content.Context;
-import android.widget.Toast;
+import android.text.TextUtils;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
+import android.widget.TextView;
 
-/**
- * MainActivity that hosts a WebView to display the Play Framework website
- */
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class MainActivity extends Activity {
-    
-    private WebView webView;
-    
-    // Change this URL to match your Play Framework server
-    // For local development, use: http://10.0.2.2:9000 (Android emulator)
-    // For production, use your actual server URL
-    private static final String WEBSITE_URL = "http://10.0.2.2:9000";
-    
+
+    private LinearLayout loginLayout;
+    private LinearLayout registerLayout;
+    private TextView messageView;
+
+    private EditText loginUsername;
+    private EditText loginPassword;
+
+    private EditText registerUsername;
+    private EditText registerPassword;
+    private EditText registerEmail;
+    private EditText registerFullName;
+    private Spinner registerRole;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        
-        webView = findViewById(R.id.webview);
-        
-        // Check network connectivity
-        if (!isNetworkAvailable()) {
-            Toast.makeText(this, "No internet connection available", Toast.LENGTH_LONG).show();
+
+        loginLayout = findViewById(R.id.login_layout);
+        registerLayout = findViewById(R.id.register_layout);
+        messageView = findViewById(R.id.message_view);
+
+        loginUsername = findViewById(R.id.login_username);
+        loginPassword = findViewById(R.id.login_password);
+
+        registerUsername = findViewById(R.id.register_username);
+        registerPassword = findViewById(R.id.register_password);
+        registerEmail = findViewById(R.id.register_email);
+        registerFullName = findViewById(R.id.register_full_name);
+        registerRole = findViewById(R.id.register_role);
+
+        ArrayAdapter<String> roleAdapter = new ArrayAdapter<>(
+            this,
+            android.R.layout.simple_spinner_item,
+            new String[]{"Alumno", "Profesor"}
+        );
+        roleAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        registerRole.setAdapter(roleAdapter);
+
+        Button loginButton = findViewById(R.id.login_button);
+        Button registerButton = findViewById(R.id.register_button);
+        TextView showRegister = findViewById(R.id.show_register);
+        TextView showLogin = findViewById(R.id.show_login);
+
+        loginButton.setOnClickListener(view -> handleLogin());
+        registerButton.setOnClickListener(view -> handleRegister());
+        showRegister.setOnClickListener(view -> showRegister());
+        showLogin.setOnClickListener(view -> showLogin());
+    }
+
+    private void showRegister() {
+        loginLayout.setVisibility(View.GONE);
+        registerLayout.setVisibility(View.VISIBLE);
+        clearMessage();
+    }
+
+    private void showLogin() {
+        registerLayout.setVisibility(View.GONE);
+        loginLayout.setVisibility(View.VISIBLE);
+        clearMessage();
+    }
+
+    private void handleLogin() {
+        String username = loginUsername.getText().toString().trim();
+        String password = loginPassword.getText().toString().trim();
+
+        if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password)) {
+            showMessage("Introduce usuario y contraseña.", false);
+            return;
         }
-        
-        // Configure WebView settings
-        WebSettings webSettings = webView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setDomStorageEnabled(true);
-        webSettings.setLoadWithOverviewMode(true);
-        webSettings.setUseWideViewPort(true);
-        webSettings.setBuiltInZoomControls(true);
-        webSettings.setDisplayZoomControls(false);
-        webSettings.setSupportZoom(true);
-        webSettings.setDefaultTextEncodingName("utf-8");
-        
-        // Enable caching for better performance
-        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        webSettings.setAppCacheEnabled(true);
-        
-        // Set WebViewClient to handle page navigation
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
-                return true;
+
+        setLoading(true);
+        new Thread(() -> {
+            try {
+                ApiClient api = new ApiClient(this);
+                Map<String, String> params = new HashMap<>();
+                params.put("username", username);
+                params.put("password", password);
+                JSONObject response = api.post("/api/login", params);
+                JSONObject userJson = response.optJSONObject("user");
+                if (userJson == null) {
+                    runOnUiThread(() -> showMessage("Usuario o contraseña incorrectos.", false));
+                    return;
+                }
+                User user = toUser(userJson);
+                SessionStore.setCurrentUser(user);
+                runOnUiThread(() -> {
+                    showMessage("✅ Bienvenido, redirigiendo al panel...", true);
+                    navigateToPanel(user);
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> showMessage("No se pudo conectar con el servidor.", false));
+            } finally {
+                runOnUiThread(() -> setLoading(false));
             }
-            
-            @Override
-            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-                Toast.makeText(MainActivity.this, "Error: " + description, Toast.LENGTH_SHORT).show();
-            }
-        });
-        
-        // Set WebChromeClient for better web app support
-        webView.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public void onProgressChanged(WebView view, int newProgress) {
-                // You can add a progress bar here if needed
-            }
-        });
-        
-        // Load the website
-        webView.loadUrl(WEBSITE_URL);
+        }).start();
     }
-    
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        // Handle back button to navigate webview history
-        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
-            webView.goBack();
-            return true;
+
+    private void handleRegister() {
+        String username = registerUsername.getText().toString().trim();
+        String password = registerPassword.getText().toString().trim();
+        String email = registerEmail.getText().toString().trim();
+        String fullName = registerFullName.getText().toString().trim();
+
+        if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password)
+            || TextUtils.isEmpty(email) || TextUtils.isEmpty(fullName)) {
+            showMessage("Completa todos los campos para registrarte.", false);
+            return;
         }
-        return super.onKeyDown(keyCode, event);
+
+        Role role = registerRole.getSelectedItemPosition() == 0 ? Role.ALUMNO : Role.PROFESOR;
+        setLoading(true);
+        new Thread(() -> {
+            try {
+                ApiClient api = new ApiClient(this);
+                Map<String, String> params = new HashMap<>();
+                params.put("username", username);
+                params.put("password", password);
+                params.put("email", email);
+                params.put("fullName", fullName);
+                params.put("rol", role == Role.ALUMNO ? "alumno" : "profesor");
+                JSONObject response = api.post("/api/register", params);
+                JSONObject userJson = response.optJSONObject("user");
+                if (userJson == null) {
+                    runOnUiThread(() -> showMessage("No se pudo registrar el usuario.", false));
+                    return;
+                }
+                User user = toUser(userJson);
+                SessionStore.setCurrentUser(user);
+                runOnUiThread(() -> {
+                    showMessage("✅ Registro completado. Bienvenido/a!", true);
+                    navigateToPanel(user);
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> showMessage("No se pudo conectar con el servidor.", false));
+            } finally {
+                runOnUiThread(() -> setLoading(false));
+            }
+        }).start();
     }
-    
-    @Override
-    protected void onResume() {
-        super.onResume();
-        webView.onResume();
-    }
-    
-    @Override
-    protected void onPause() {
-        super.onPause();
-        webView.onPause();
-    }
-    
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (webView != null) {
-            webView.destroy();
+
+    private void navigateToPanel(User user) {
+        Intent intent;
+        if (user.getRole() == Role.ALUMNO) {
+            intent = new Intent(this, PanelAlumnoActivity.class);
+        } else {
+            intent = new Intent(this, PanelProfesorActivity.class);
         }
+        startActivity(intent);
     }
-    
-    /**
-     * Check if network is available
-     */
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager = 
-            (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+
+    private void showMessage(String message, boolean success) {
+        messageView.setVisibility(View.VISIBLE);
+        messageView.setText(message);
+        messageView.setBackgroundResource(success ? R.drawable.bg_message_success : R.drawable.bg_message_error);
+    }
+
+    private void clearMessage() {
+        messageView.setVisibility(View.GONE);
+        messageView.setText("");
+    }
+
+    private void setLoading(boolean loading) {
+        findViewById(R.id.login_button).setEnabled(!loading);
+        findViewById(R.id.register_button).setEnabled(!loading);
+    }
+
+    private User toUser(JSONObject json) {
+        int id = json.optInt("id");
+        String username = json.optString("username");
+        String email = json.optString("email");
+        String fullName = json.optString("fullName");
+        String rol = json.optString("rol");
+        Role role = "profesor".equalsIgnoreCase(rol) ? Role.PROFESOR : Role.ALUMNO;
+        return new User(id, username, email, fullName, role);
     }
 }
