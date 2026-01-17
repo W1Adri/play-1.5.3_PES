@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:id="@+id/txtTitulo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Panel Alumno"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/txtSub"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bienvenido/a"
+            android:layout_marginTop="6dp"
+            android:textSize="14sp" />
+
+        <!-- Card perfil -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:padding="16dp"
+            android:background="@android:color/darker_gray"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtAlumnoInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="..."
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Accesos rápidos:"
+                android:layout_marginTop="10dp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnMaterias"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📚 Materias"
+            android:layout_marginTop="14dp" />
+
+        <Button
+            android:id="@+id/btnMisInscripciones"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="✅ Mis inscripciones"
+            android:layout_marginTop="10dp" />
+
+        <Button
+            android:id="@+id/btnReservas"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📅 Reservas"
+            android:layout_marginTop="10dp" />
+
+        <Button
+            android:id="@+id/btnChat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="💬 Chat"
+            android:layout_marginTop="10dp" />
+
+        <Button
+            android:id="@+id/btnLogout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🚪 Cerrar sesión"
+            android:layout_marginTop="18dp" />
+    </LinearLayout>
+</ScrollView>

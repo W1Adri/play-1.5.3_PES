@@ -1,0 +1,60 @@
+# --- Home / Estáticos ---
+# Página de inicio (Login/Registro)
+GET     /                                   Application.index
+# Recursos estáticos (CSS, JS, Imágenes)
+GET     /public/                            staticDir:public
+# Ignorar favicon
+GET     /favicon.ico                        404
+
+
+# --- Login / Logout / Registro ---
+# Reciben datos de un formulario (por eso POST)
+POST    /login                              Application.login
+POST    /register                           Application.register
+# El logout es solo un link (por eso GET)
+GET     /logout                             Application.logout
+
+# --- API ---
+GET     /api/ping                         Application.apiPing
+POST    /api/register                     Application.apiRegister
+POST    /api/login                        Application.apiLogin
+GET     /api/me                           Application.apiMe
+POST    /api/logout                       Application.apiLogout
+
+# --- Paneles de Usuario ---
+GET     /panel/alumno                       Application.panelAlumno
+GET     /panel/profesor                     Application.panelProfesor
+GET     /panel/gestion                      Application.gestion
+POST    /panel/gestion/usuarios/actualizar  Application.actualizarUsuario(id, username, email, fullName, rol)
+POST    /panel/gestion/usuarios/eliminar    Application.eliminarUsuario(id)
+POST    /panel/gestion/materias/actualizar  Application.actualizarMateria(id, codigo, nombre, descripcion)
+POST    /panel/gestion/materias/eliminar    Application.eliminarMateria(id)
+GET     /consultas                          Application.consultas(tipo, materiaId)
+GET     /reservas                           Application.reservas
+POST    /reservas/crear                     Application.crearReserva(inscripcionId, fecha, hora)
+GET     /reservas/{reservaId}/video         Application.video(reservaId)
+POST    /reservas/{reservaId}/reset         Application.resetearSesionVideo(reservaId)
+POST    /reservas/{reservaId}/offer         Application.publicarOffer(reservaId, sdp)
+POST    /reservas/{reservaId}/answer        Application.publicarAnswer(reservaId, sdp)
+GET     /reservas/{reservaId}/offer         Application.obtenerOffer(reservaId)
+GET     /reservas/{reservaId}/answer        Application.obtenerAnswer(reservaId)
+
+
+# --- Materias e Inscripción ---
+# Muestra la página de detalles de una materia específica
+GET     /materia/{id}                       Application.detalle(id)
+
+# Inscribe al alumno (conectado) en una materia
+# (Recibe el 'id' de la materia y el 'profesorId' del formulario)
+POST    /materia/inscribirse                Application.inscribirse(id, profesorId)
+
+
+# --- Chat (API y Vista) ---
+# Muestra la página HTML del chat entre dos usuarios
+GET     /chat/{alumnoId}/{profesorId}       Application.chat(alumnoId, profesorId)
+
+# URL de la API para enviar un mensaje (debe ser POST)
+POST    /api/chat/enviar                    Application.enviarMensaje(receptorId, contenido)
+
+# URL de la API para obtener mensajes nuevos (debe ser GET)
+GET     /api/chat/mensajes                  Application.obtenerMensajes(alumnoId, profesorId, lastId)

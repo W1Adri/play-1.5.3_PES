@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>${m.nombre}</title>
+    <link rel="stylesheet" media="screen" href="@{'/public/stylesheets/main.css'}">
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at top right, #b0f3f1 0%, #c8f7d8 40%, #fef6e4 100%);
+            display: flex;
+            flex-direction: column;
+        }
+        .top-bar {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.85);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 6px 18px rgba(36, 116, 100, 0.12);
+        }
+        .actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 16px;
+            border-radius: 999px;
+            border: none;
+            font-weight: 600;
+            text-decoration: none;
+            color: #1f4d45;
+            background: rgba(31, 77, 69, 0.08);
+            transition: transform .2s ease;
+        }
+        .btn.logout {
+            color: white;
+            background: linear-gradient(135deg, #ff6b6b, #d1456b);
+            box-shadow: 0 4px 12px rgba(209, 69, 107, 0.35);
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 16px 80px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 36px;
+            border-radius: 24px;
+            box-shadow: 0 24px 50px rgba(36, 116, 100, 0.18);
+            width: min(420px, 90%);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+        }
+        .card h1 {
+            margin-top: 0;
+            color: #1f4d45;
+        }
+        .card p {
+            color: #3f6f64;
+            line-height: 1.5;
+        }
+        label {
+            display: block;
+            margin-top: 18px;
+            margin-bottom: 6px;
+            color: #305951;
+            font-weight: 600;
+        }
+        select, button {
+            padding: 11px 14px;
+            margin-top: 4px;
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid rgba(31, 77, 69, 0.18);
+            font-size: 15px;
+            font-family: inherit;
+        }
+        button {
+            background: linear-gradient(135deg, #3f87a6, #266d8e);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 6px 16px rgba(63, 135, 166, 0.3);
+        }
+        button.secondary {
+            margin-top: 14px;
+            background: rgba(63, 135, 166, 0.08);
+            color: #2f5670;
+            box-shadow: none;
+            border: 1px solid rgba(47, 86, 112, 0.25);
+        }
+        button:hover {
+            transform: translateY(-1px);
+        }
+        @media (max-width: 600px) {
+            .top-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 14px;
+            }
+            .actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+<header class="top-bar">
+    <div>
+        <div class="page-logo">
+            <img class="logo" src="@{'/public/images/logo.svg'}" alt="Clases online">
+            <span>${m.nombre}</span>
+        </div>
+    </div>
+    <div class="actions">
+        <a class="btn" href="@{Application.panelAlumno()}">← Volver al panel</a>
+        <a class="btn logout" href="@{Application.logout()}">Cerrar sesión</a>
+    </div>
+</header>
+
+<main>
+    <div class="card">
+        <h1>${m.nombre}</h1>
+        <p>${m.descripcion}</p>
+        <form action="@{Application.inscribirse}" method="POST">
+            <input type="hidden" name="id" value="${m.id}">
+            <input type="hidden" name="username" value="${u.username}">
+            <label>Selecciona profesor:</label>
+            <select name="profesorId" required>
+                #{list items:profesores, as:'p'}
+                <option value="${p.id}">${p.fullName}</option>
+                #{/list}
+            </select>
+            <button type="submit">Inscribirme</button>
+        </form>
+
+        <form action="@{Application.panelAlumno}" method="POST">
+            <input type="hidden" name="username" value="${u.username}">
+            <button type="submit" class="secondary">Volver</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

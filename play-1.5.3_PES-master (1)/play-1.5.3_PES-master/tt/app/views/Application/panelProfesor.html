@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel del Profesor</title>
+    <link rel="stylesheet" media="screen" href="@{'/public/stylesheets/main.css'}">
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top left, #ffeaa7 0%, #fff6e6 45%, #ffecec 100%);
+            margin: 0;
+            min-height: 100vh;
+        }
+        .top-bar {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.88);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 6px 20px rgba(217, 145, 71, 0.12);
+        }
+        .brand {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .brand strong {
+            font-size: 20px;
+            color: #704b2f;
+            letter-spacing: .02em;
+        }
+        .brand span {
+            font-size: 14px;
+            color: #8b6242;
+        }
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 16px;
+            border-radius: 999px;
+            border: none;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform .2s ease, box-shadow .2s ease;
+            color: white;
+            background: linear-gradient(135deg, #f39c12, #d35400);
+            box-shadow: 0 4px 12px rgba(241, 154, 43, 0.35);
+        }
+        .btn.logout {
+            background: linear-gradient(135deg, #ff6b6b, #d1456b);
+            box-shadow: 0 4px 12px rgba(209, 69, 107, 0.35);
+        }
+        .btn.secondary {
+            background: transparent;
+            color: #8b6242;
+            border: 1px solid rgba(241, 154, 43, 0.4);
+            box-shadow: none;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+        main {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 24px 60px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 22px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 20px 45px rgba(112, 75, 47, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .card.stats {
+            gap: 10px;
+        }
+        .card h3 {
+            margin: 0;
+            color: #704b2f;
+        }
+        .card h2 {
+            margin: 0;
+            color: #704b2f;
+            font-size: 20px;
+        }
+        .stats-grid {
+            display: grid;
+            gap: 12px;
+        }
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: rgba(241, 154, 43, 0.12);
+            color: #704b2f;
+            font-weight: 600;
+        }
+        .stat span {
+            font-size: 22px;
+            color: #8b6242;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(241, 154, 43, 0.15);
+            color: #8b6242;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .empty {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px dashed rgba(112, 75, 47, 0.4);
+            border-radius: 18px;
+            padding: 32px;
+            text-align: center;
+            color: #8b6242;
+            font-size: 15px;
+        }
+        @media (max-width: 640px) {
+            .top-bar {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+            .actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+<header class="top-bar">
+    <div class="brand">
+        <div class="page-logo">
+            <img class="logo" src="@{'/public/images/logo.svg'}" alt="Clases online">
+            <span>Clases online</span>
+        </div>
+        <span>Hola, ${profesor.fullName}</span>
+    </div>
+    <div class="actions">
+        <a class="btn secondary" href="@{Application.consultas()}">Consultas personalizadas</a>
+        <a class="btn secondary" href="@{Application.gestion()}">Gestión académica</a>
+        <a class="btn" href="@{Application.reservas()}">Reservas de clase</a>
+        <a class="btn logout" href="@{Application.logout()}">Cerrar sesión</a>
+    </div>
+</header>
+
+<main>
+    <section class="card stats">
+        <h2>📊 Comunidad</h2>
+        <div class="stats-grid">
+            <div class="stat">Usuarios registrados <span>${totalUsuarios}</span></div>
+            <div class="stat">Alumnos activos <span>${totalAlumnos}</span></div>
+            <div class="stat">Profesores activos <span>${totalProfesores}</span></div>
+        </div>
+    </section>
+    <div class="grid">
+        #{if misAlumnos && misAlumnos.size() > 0}
+            #{list items:misAlumnos, as:'ins'}
+                <article class="card">
+                    <div class="badge">${ins.materia.nombre}</div>
+                    <h3>${ins.alumno.fullName}</h3>
+                    <p>Usuario: <strong>${ins.alumno.username}</strong></p>
+                    <a class="btn" href="@{Application.chat(ins.alumno.id, profesor.id)}">💬 Abrir chat</a>
+                </article>
+            #{/list}
+        #{/if}
+        #{else}
+            <div class="empty">Aún no tienes alumnos inscritos. Cuando un alumno se una a una materia aparecerá aquí.</div>
+        #{/else}
+    </div>
+</main>
+</body>
+</html>
