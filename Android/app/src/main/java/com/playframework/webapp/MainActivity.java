@@ -1,119 +1,145 @@
 package com.playframework.webapp;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
+import android.webkit.PermissionRequest;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.WebChromeClient;
-import android.view.KeyEvent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.content.Context;
+import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
-/**
- * MainActivity that hosts a WebView to display the Play Framework website
- */
 public class MainActivity extends Activity {
-    
+
+    private static final int PERMISSION_REQUEST_CODE = 1001;
+
     private WebView webView;
-    
-    // Change this URL to match your Play Framework server
-    // For local development, use: http://10.0.2.2:9000 (Android emulator)
-    // For production, use your actual server URL
-    private static final String WEBSITE_URL = "http://10.0.2.2:9000";
-    
+    private ProgressBar loading;
+    private View errorView;
+    private PermissionRequest pendingPermissionRequest;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        
+
         webView = findViewById(R.id.webview);
-        
-        // Check network connectivity
-        if (!isNetworkAvailable()) {
-            Toast.makeText(this, "No internet connection available", Toast.LENGTH_LONG).show();
-        }
-        
-        // Configure WebView settings
+        loading = findViewById(R.id.loading);
+        errorView = findViewById(R.id.error_view);
+        Button retryButton = findViewById(R.id.retry_button);
+
+        retryButton.setOnClickListener(view -> loadWebsite());
+
+        configureWebView();
+        loadWebsite();
+    }
+
+    private void configureWebView() {
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
-        webSettings.setLoadWithOverviewMode(true);
         webSettings.setUseWideViewPort(true);
-        webSettings.setBuiltInZoomControls(true);
-        webSettings.setDisplayZoomControls(false);
-        webSettings.setSupportZoom(true);
-        webSettings.setDefaultTextEncodingName("utf-8");
-        
-        // Enable caching for better performance
-        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        webSettings.setAppCacheEnabled(true);
-        
-        // Set WebViewClient to handle page navigation
+        webSettings.setLoadWithOverviewMode(true);
+        webSettings.setMediaPlaybackRequiresUserGesture(false);
+
         webView.setWebViewClient(new WebViewClient() {
             @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
-                return true;
+            public void onPageFinished(WebView view, String url) {
+                loading.setVisibility(View.GONE);
+                errorView.setVisibility(View.GONE);
+                webView.setVisibility(View.VISIBLE);
             }
-            
+
             @Override
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-                Toast.makeText(MainActivity.this, "Error: " + description, Toast.LENGTH_SHORT).show();
+                showError(description);
             }
         });
-        
-        // Set WebChromeClient for better web app support
+
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
-            public void onProgressChanged(WebView view, int newProgress) {
-                // You can add a progress bar here if needed
+            public void onPermissionRequest(PermissionRequest request) {
+                if (hasMediaPermissions()) {
+                    request.grant(request.getResources());
+                    return;
+                }
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                    request.grant(request.getResources());
+                    return;
+                }
+                pendingPermissionRequest = request;
+                requestPermissions(
+                    new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO},
+                    PERMISSION_REQUEST_CODE
+                );
             }
         });
-        
-        // Load the website
-        webView.loadUrl(WEBSITE_URL);
     }
-    
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        // Handle back button to navigate webview history
-        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
-            webView.goBack();
+
+    private void loadWebsite() {
+        loading.setVisibility(View.VISIBLE);
+        errorView.setVisibility(View.GONE);
+        webView.setVisibility(View.INVISIBLE);
+        String url = getString(R.string.website_url);
+        webView.loadUrl(url);
+    }
+
+    private void showError(String description) {
+        loading.setVisibility(View.GONE);
+        webView.setVisibility(View.INVISIBLE);
+        errorView.setVisibility(View.VISIBLE);
+        Toast.makeText(this, description, Toast.LENGTH_SHORT).show();
+    }
+
+    private boolean hasMediaPermissions() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             return true;
         }
-        return super.onKeyDown(keyCode, event);
+        return checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+            && checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
     }
-    
+
     @Override
-    protected void onResume() {
-        super.onResume();
-        webView.onResume();
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE && pendingPermissionRequest != null) {
+            boolean granted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    granted = false;
+                    break;
+                }
+            }
+            if (granted) {
+                pendingPermissionRequest.grant(pendingPermissionRequest.getResources());
+            } else {
+                pendingPermissionRequest.deny();
+                Toast.makeText(this, "Permisos de cámara/micrófono denegados", Toast.LENGTH_LONG).show();
+            }
+            pendingPermissionRequest = null;
+        }
     }
-    
+
     @Override
-    protected void onPause() {
-        super.onPause();
-        webView.onPause();
+    public void onBackPressed() {
+        if (webView.canGoBack()) {
+            webView.goBack();
+        } else {
+            super.onBackPressed();
+        }
     }
-    
+
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         if (webView != null) {
             webView.destroy();
         }
-    }
-    
-    /**
-     * Check if network is available
-     */
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager = 
-            (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        super.onDestroy();
     }
 }
