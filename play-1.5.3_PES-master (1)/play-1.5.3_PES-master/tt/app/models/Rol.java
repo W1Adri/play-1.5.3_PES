@@ -4,5 +4,6 @@ package models;
  */
 public enum Rol {
     ALUMNO,
-    PROFESOR
+    PROFESOR,
+    ADMIN
 }
