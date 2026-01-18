@@ -58,7 +58,7 @@ static void checkAutenticacion() {
             } else if (u.rol == Rol.ALUMNO) {
                 panelAlumno();
                 return;
-            } else if (u.rol == Rol.PROFESOR) {
+            } else if (u.rol == Rol.PROFESOR || u.rol == Rol.ADMIN) {
                 panelProfesor();
                 return;
             }
@@ -117,7 +117,7 @@ static void checkAutenticacion() {
         session.put("username", u.username);
 
         if (u.rol == Rol.ALUMNO) panelAlumno();
-        else if (u.rol == Rol.PROFESOR) panelProfesor();
+        else if (u.rol == Rol.PROFESOR || u.rol == Rol.ADMIN) panelProfesor();
         else {
             flash.error("Rol desconocido para este usuario.");
             logout();
@@ -130,6 +130,10 @@ static void checkAutenticacion() {
         String username = session.get("username");
         if (username == null) return null;
         return Usuario.find("byUsername", username).first();
+    }
+
+    private static boolean isAdmin(Usuario usuario) {
+        return usuario != null && usuario.rol == Rol.ADMIN;
     }
 
     // --- PANEL ALUMNO ---
@@ -174,7 +178,7 @@ static void checkAutenticacion() {
             index();
             return;
         }
-        if (profesor.rol != Rol.PROFESOR) {
+        if (profesor.rol != Rol.PROFESOR && profesor.rol != Rol.ADMIN) {
             flash.error("Acceso no autorizado.");
             logout();
         }
@@ -195,9 +199,14 @@ static void checkAutenticacion() {
             index();
             return;
         }
-        if (profesor.rol != Rol.PROFESOR) {
+        if (profesor.rol != Rol.PROFESOR && profesor.rol != Rol.ADMIN) {
             flash.error("Acceso no autorizado.");
             logout();
+        }
+        if (!isAdmin(profesor)) {
+            flash.error("Acceso restringido al administrador.");
+            panelProfesor();
+            return;
         }
 
         List<Usuario> usuarios = Usuario.findAll();
@@ -213,9 +222,14 @@ static void checkAutenticacion() {
             index();
             return;
         }
-        if (profesor.rol != Rol.PROFESOR) {
+        if (profesor.rol != Rol.PROFESOR && profesor.rol != Rol.ADMIN) {
             flash.error("Acceso no autorizado.");
             logout();
+        }
+        if (!isAdmin(profesor)) {
+            flash.error("Acceso restringido al administrador.");
+            panelProfesor();
+            return;
         }
 
         Usuario usuario = Usuario.findById(id);
@@ -288,9 +302,14 @@ static void checkAutenticacion() {
             index();
             return;
         }
-        if (profesor.rol != Rol.PROFESOR) {
+        if (profesor.rol != Rol.PROFESOR && profesor.rol != Rol.ADMIN) {
             flash.error("Acceso no autorizado.");
             logout();
+        }
+        if (!isAdmin(profesor)) {
+            flash.error("Acceso restringido al administrador.");
+            panelProfesor();
+            return;
         }
 
         Usuario usuario = Usuario.findById(id);
@@ -332,9 +351,14 @@ static void checkAutenticacion() {
             index();
             return;
         }
-        if (profesor.rol != Rol.PROFESOR) {
+        if (profesor.rol != Rol.PROFESOR && profesor.rol != Rol.ADMIN) {
             flash.error("Acceso no autorizado.");
             logout();
+        }
+        if (!isAdmin(profesor)) {
+            flash.error("Acceso restringido al administrador.");
+            panelProfesor();
+            return;
         }
 
         Materia materia = Materia.findById(id);
@@ -386,6 +410,11 @@ static void checkAutenticacion() {
         if (profesor.rol != Rol.PROFESOR) {
             flash.error("Acceso no autorizado.");
             logout();
+        }
+        if (!isAdmin(profesor)) {
+            flash.error("Acceso restringido al administrador.");
+            panelProfesor();
+            return;
         }
 
         Materia materia = Materia.findById(id);
@@ -1092,7 +1121,7 @@ public static void apiConsultas(String tipo, Long materiaId) {
 // --- API GESTION (PROFESOR) ---
 public static void apiGestionUsuarios() {
     Usuario profesor = connected();
-    if (profesor == null || profesor.rol != Rol.PROFESOR) {
+    if (profesor == null || profesor.rol != Rol.ADMIN) {
         Map<String, Object> resp = new HashMap<String, Object>();
         resp.put("status", "error");
         resp.put("msg", "Acceso no autorizado");
@@ -1112,7 +1141,7 @@ public static void apiGestionUsuarios() {
 
 public static void apiGestionMaterias() {
     Usuario profesor = connected();
-    if (profesor == null || profesor.rol != Rol.PROFESOR) {
+    if (profesor == null || profesor.rol != Rol.ADMIN) {
         Map<String, Object> resp = new HashMap<String, Object>();
         resp.put("status", "error");
         resp.put("msg", "Acceso no autorizado");
@@ -1131,7 +1160,7 @@ public static void apiGestionMaterias() {
 public static void apiActualizarUsuario(Long id, String username, String email, String fullName, String rol) {
     Usuario profesor = connected();
     Map<String, Object> resp = new HashMap<String, Object>();
-    if (profesor == null || profesor.rol != Rol.PROFESOR) {
+    if (profesor == null || profesor.rol != Rol.ADMIN) {
         resp.put("status", "error");
         resp.put("msg", "Acceso no autorizado");
         renderJSON(resp);
@@ -1210,7 +1239,7 @@ public static void apiActualizarUsuario(Long id, String username, String email, 
 public static void apiEliminarUsuario(Long id) {
     Usuario profesor = connected();
     Map<String, Object> resp = new HashMap<String, Object>();
-    if (profesor == null || profesor.rol != Rol.PROFESOR) {
+    if (profesor == null || profesor.rol != Rol.ADMIN) {
         resp.put("status", "error");
         resp.put("msg", "Acceso no autorizado");
         renderJSON(resp);
@@ -1248,7 +1277,7 @@ public static void apiEliminarUsuario(Long id) {
 public static void apiActualizarMateria(Long id, String codigo, String nombre, String descripcion) {
     Usuario profesor = connected();
     Map<String, Object> resp = new HashMap<String, Object>();
-    if (profesor == null || profesor.rol != Rol.PROFESOR) {
+    if (profesor == null || profesor.rol != Rol.ADMIN) {
         resp.put("status", "error");
         resp.put("msg", "Acceso no autorizado");
         renderJSON(resp);
@@ -1301,7 +1330,7 @@ public static void apiActualizarMateria(Long id, String codigo, String nombre, S
 public static void apiEliminarMateria(Long id) {
     Usuario profesor = connected();
     Map<String, Object> resp = new HashMap<String, Object>();
-    if (profesor == null || profesor.rol != Rol.PROFESOR) {
+    if (profesor == null || profesor.rol != Rol.ADMIN) {
         resp.put("status", "error");
         resp.put("msg", "Acceso no autorizado");
         renderJSON(resp);
