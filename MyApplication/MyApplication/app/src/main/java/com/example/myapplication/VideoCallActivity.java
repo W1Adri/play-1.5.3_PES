@@ -57,6 +57,10 @@ public class VideoCallActivity extends AppCompatActivity {
     private Button btnToggleVideo;
     private boolean isAudioEnabled = true;
     private boolean isVideoEnabled = true;
+    
+    // Constants for SDP polling
+    private static final int MAX_POLL_ATTEMPTS = 60; // 60 attempts * 1.5s = 90 seconds timeout
+    private static final int POLL_INTERVAL_MS = 1500;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -276,10 +280,8 @@ public class VideoCallActivity extends AppCompatActivity {
     private void esperarOfferYResponder() {
         runOnUiThread(() -> Toast.makeText(this, "Esperando oferta del profesor...", Toast.LENGTH_SHORT).show());
         new Thread(() -> {
-            final int MAX_ATTEMPTS = 60; // 60 attempts * 1.5s = 90 seconds timeout
-            final int POLL_INTERVAL_MS = 1500;
             int intentos = 0;
-            while (running && intentos < MAX_ATTEMPTS) {
+            while (running && intentos < MAX_POLL_ATTEMPTS) {
                 try {
                     ApiClient.ApiResponse response = ApiClient.get("/reservas/" + reservaId + "/offer");
                     JSONObject json = ApiClient.parseJson(response.body);
@@ -306,7 +308,7 @@ public class VideoCallActivity extends AppCompatActivity {
                     break;
                 }
             }
-            if (intentos >= MAX_ATTEMPTS) {
+            if (intentos >= MAX_POLL_ATTEMPTS) {
                 runOnUiThread(() -> {
                     Toast.makeText(VideoCallActivity.this, "Timeout esperando oferta", Toast.LENGTH_LONG).show();
                     finish();
@@ -345,10 +347,8 @@ public class VideoCallActivity extends AppCompatActivity {
     private void esperarAnswer() {
         runOnUiThread(() -> Toast.makeText(this, "Esperando respuesta del alumno...", Toast.LENGTH_SHORT).show());
         new Thread(() -> {
-            final int MAX_ATTEMPTS = 60; // 60 attempts * 1.5s = 90 seconds timeout
-            final int POLL_INTERVAL_MS = 1500;
             int intentos = 0;
-            while (running && intentos < MAX_ATTEMPTS) {
+            while (running && intentos < MAX_POLL_ATTEMPTS) {
                 try {
                     ApiClient.ApiResponse response = ApiClient.get("/reservas/" + reservaId + "/answer");
                     JSONObject json = ApiClient.parseJson(response.body);
@@ -376,7 +376,7 @@ public class VideoCallActivity extends AppCompatActivity {
                     break;
                 }
             }
-            if (intentos >= MAX_ATTEMPTS) {
+            if (intentos >= MAX_POLL_ATTEMPTS) {
                 runOnUiThread(() -> {
                     Toast.makeText(VideoCallActivity.this, "Timeout esperando respuesta", Toast.LENGTH_LONG).show();
                     finish();
