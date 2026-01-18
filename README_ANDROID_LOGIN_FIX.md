@@ -148,7 +148,7 @@ private static String readRequestBody() {
 
 ### Code Quality Improvements
 1. Extracted duplicate truncation logic into `truncateForLogging()`
-2. Updated to use `JsonParser.parseString()` (non-deprecated)
+2. Fixed Gson API compatibility to work with Gson 2.8.5 (using `new JsonParser().parse()`)
 3. Enhanced error messages
 4. Added comprehensive JavaDoc
 
@@ -215,10 +215,29 @@ If you encounter any issues:
 4. **03cc5de** - Add comprehensive testing and communication documentation
 5. **c55da6a** - Security & code quality improvements
 6. **8451216** - Add comprehensive security analysis
+7. **d46399f** - Fix JsonParser.parseString() compatibility with Gson 2.8.5
 
 ---
 
 **Created**: 2026-01-18
+**Last Updated**: 2026-01-18
 **Status**: ✅ READY FOR PRODUCTION
 **Risk Level**: LOW (improvement over existing code)
 **Breaking Changes**: None
+
+## 🔧 Additional Fix: Gson 2.8.5 Compatibility
+
+### Issue
+The code was using `JsonParser.parseString()` which was introduced in Gson 2.8.6, but the project uses Gson 2.8.5.
+
+### Solution
+Changed line 1598 in Application.java from:
+```java
+JsonElement element = com.google.gson.JsonParser.parseString(body);
+```
+to:
+```java
+JsonElement element = new com.google.gson.JsonParser().parse(body);
+```
+
+This older API is compatible with Gson 2.8.5 and achieves the same result.

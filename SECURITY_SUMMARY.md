@@ -36,7 +36,7 @@ This PR fixes the Android application login by correcting how JSON request bodie
 - Uses Gson library (safe, well-tested)
 - Proper exception handling
 - No use of `eval()` or dynamic code execution
-- Updated to use `JsonParser.parseString()` (non-deprecated method)
+- Fixed to use `new JsonParser().parse()` for Gson 2.8.5 compatibility
 - **Lines**: 1583-1594
 
 #### ✅ Error Handling
@@ -146,13 +146,21 @@ private static String readRequestBody() {
 
 The changes are safe and do not introduce any security vulnerabilities. The fix actually improves security by:
 1. Adding proper logging without exposing sensitive data
-2. Using non-deprecated Gson methods
+2. Using Gson API compatible with version 2.8.5
 3. Better error handling with clear logging
 4. Comprehensive documentation
+
+## Additional Fix: Gson 2.8.5 Compatibility
+
+A compilation error was fixed by changing from `JsonParser.parseString()` (introduced in Gson 2.8.6) to `new JsonParser().parse()` (available since Gson 1.0). This change:
+- ✅ Maintains the same functionality
+- ✅ No security implications
+- ✅ Better code organization with proper imports
 
 No additional security measures required beyond normal security best practices already in place in the application.
 
 ---
 **Reviewed by**: AI Security Analysis
 **Date**: 2026-01-18
+**Last Updated**: 2026-01-18
 **Risk Level**: LOW (improvement over existing code)
