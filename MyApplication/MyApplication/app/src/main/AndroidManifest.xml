@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:allowBackup="true"
@@ -19,6 +21,10 @@
         <activity android:name=".ChatActivity" />
         <activity android:name=".ReservasActivity" />
         <activity android:name=".MateriasActivity" />
+        <activity android:name=".MateriaDetalleActivity" />
+        <activity android:name=".VideoCallActivity" />
+        <activity android:name=".ConsultasActivity" />
+        <activity android:name=".GestionActivity" />
         <activity android:name=".AlumnoActivity" />
         <activity android:name=".ProfesorActivity" />
         <activity android:name=".RegisterActivity" />

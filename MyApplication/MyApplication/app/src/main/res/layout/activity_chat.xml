@@ -19,7 +19,7 @@
         android:id="@+id/txtSub"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Conversación (mock)"
+        android:text="Conversación"
         android:layout_marginTop="6dp"
         android:textColor="@color/brand_text_secondary" />
 

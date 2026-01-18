@@ -3,6 +3,7 @@ package com.example.myapplication;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -44,6 +45,7 @@ public class ProfesorActivity extends AppCompatActivity {
         Button btnReservas = findViewById(R.id.btnReservas);
         Button btnChat = findViewById(R.id.btnChat);
         Button btnGestion = findViewById(R.id.btnGestion);
+        Button btnMenu = findViewById(R.id.btnMenu);
         Button btnLogout = findViewById(R.id.btnLogout);
 
         btnMisAlumnos.setOnClickListener(v -> {
@@ -68,10 +70,38 @@ public class ProfesorActivity extends AppCompatActivity {
         });
 
         btnGestion.setOnClickListener(v -> {
-            // De momento lo dejamos para después
-            Intent i = new Intent(this, MateriasActivity.class);
+            Intent i = new Intent(this, GestionActivity.class);
             i.putExtra("rol", rol);
             startActivity(i);
+        });
+
+        btnMenu.setOnClickListener(v -> {
+            PopupMenu menu = new PopupMenu(this, v);
+            menu.getMenu().add("Mis alumnos");
+            menu.getMenu().add("Reservas");
+            menu.getMenu().add("Chat");
+            menu.getMenu().add("Gestión académica");
+            menu.getMenu().add("Consultas");
+            menu.getMenu().add("Cerrar sesión");
+            menu.setOnMenuItemClickListener(item -> {
+                String title = item.getTitle().toString();
+                if ("Mis alumnos".equals(title)) {
+                    btnMisAlumnos.performClick();
+                } else if ("Reservas".equals(title)) {
+                    btnReservas.performClick();
+                } else if ("Chat".equals(title)) {
+                    btnChat.performClick();
+                } else if ("Gestión académica".equals(title)) {
+                    btnGestion.performClick();
+                } else if ("Consultas".equals(title)) {
+                    Intent i = new Intent(this, ConsultasActivity.class);
+                    startActivity(i);
+                } else if ("Cerrar sesión".equals(title)) {
+                    btnLogout.performClick();
+                }
+                return true;
+            });
+            menu.show();
         });
 
         btnLogout.setOnClickListener(v -> {

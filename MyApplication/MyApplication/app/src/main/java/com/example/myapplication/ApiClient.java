@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -58,9 +59,36 @@ public final class ApiClient {
         return new ApiResponse(code, body);
     }
 
+    public static ApiResponse postJson(String path, JSONObject payload) throws IOException {
+        URL url = new URL(BASE_URL + path);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setDoOutput(true);
+        conn.setConnectTimeout(5000);
+        conn.setReadTimeout(5000);
+        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+
+        String body = payload != null ? payload.toString() : "{}";
+        try (OutputStream os = conn.getOutputStream()) {
+            os.write(body.getBytes(StandardCharsets.UTF_8));
+        }
+
+        int code = conn.getResponseCode();
+        String responseBody = readBody(code >= 200 && code < 300 ? conn.getInputStream() : conn.getErrorStream());
+        return new ApiResponse(code, responseBody);
+    }
+
     public static JSONObject parseJson(String body) {
         try {
             return new JSONObject(body);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static JSONArray parseJsonArray(String body) {
+        try {
+            return new JSONArray(body);
         } catch (Exception e) {
             return null;
         }

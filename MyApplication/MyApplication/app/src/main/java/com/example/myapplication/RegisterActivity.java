@@ -12,8 +12,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Map;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -57,14 +55,14 @@ public class RegisterActivity extends AppCompatActivity {
 
             new Thread(() -> {
                 try {
-                    Map<String, String> params = new HashMap<>();
-                    params.put("username", username);
-                    params.put("password", pass);
-                    params.put("email", email);
-                    params.put("fullName", fullName);
-                    params.put("rol", role);
+                    JSONObject payload = new JSONObject();
+                    payload.put("username", username);
+                    payload.put("password", pass);
+                    payload.put("email", email);
+                    payload.put("fullName", fullName);
+                    payload.put("rol", role);
 
-                    ApiClient.ApiResponse response = ApiClient.postForm("/api/register", params);
+                    ApiClient.ApiResponse response = ApiClient.postJson("/api/register", payload);
                     JSONObject json = ApiClient.parseJson(response.body);
 
                     if (response.code >= 200 && response.code < 300 && json != null

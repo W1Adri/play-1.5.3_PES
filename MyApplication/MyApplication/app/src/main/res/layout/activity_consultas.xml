@@ -7,28 +7,49 @@
     android:background="@drawable/bg_gradient_blue">
 
     <TextView
-        android:id="@+id/txtTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Reservas"
+        android:text="Consultas"
         android:textStyle="bold"
         android:textSize="24sp"
         android:textColor="@color/brand_text_primary" />
 
-    <TextView
-        android:id="@+id/txtSub"
+    <Spinner
+        android:id="@+id/spTipo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Listado"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="12dp" />
+
+    <Spinner
+        android:id="@+id/spMateria"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" />
+
+    <Button
+        android:id="@+id/btnConsultar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Consultar"
+        android:textColor="@color/white"
+        android:background="@drawable/button_primary"
+        android:layout_marginTop="12dp" />
+
+    <TextView
+        android:id="@+id/txtResultado"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Resultado"
+        android:layout_marginTop="12dp"
         android:textColor="@color/brand_text_secondary" />
 
     <ListView
-        android:id="@+id/listReservas"
+        android:id="@+id/listDetalle"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="12dp"/>
+        android:layout_marginTop="10dp" />
+
     <Button
         android:id="@+id/btnBack"
         android:layout_width="wrap_content"
@@ -36,13 +57,4 @@
         android:text="← Volver"
         android:textColor="@color/brand_primary"
         android:background="@drawable/button_secondary" />
-
-    <Button
-        android:id="@+id/btnCrear"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="➕ Crear reserva"
-        android:textColor="@color/white"
-        android:background="@drawable/button_primary"
-        android:layout_marginTop="12dp"/>
 </LinearLayout>

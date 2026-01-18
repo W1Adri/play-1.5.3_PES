@@ -29,6 +29,15 @@
             android:textSize="14sp"
             android:textColor="@color/brand_text_secondary" />
 
+        <Button
+            android:id="@+id/btnMenu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="☰ Menú"
+            android:textColor="@color/brand_primary"
+            android:background="@drawable/button_secondary"
+            android:layout_marginTop="10dp" />
+
         <!-- Card perfil -->
         <LinearLayout
             android:layout_width="match_parent"
