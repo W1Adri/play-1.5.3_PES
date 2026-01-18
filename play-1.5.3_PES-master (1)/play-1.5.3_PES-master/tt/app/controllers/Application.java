@@ -1501,6 +1501,20 @@ public static void apiEliminarMateria(Long id) {
     }
 
     /**
+     * Trunca texto para logging, mostrando solo los primeros caracteres.
+     * Util para evitar logs excesivamente largos.
+     */
+    private static String truncateForLogging(String text, int maxLength) {
+        if (text == null) {
+            return "null";
+        }
+        if (text.length() <= maxLength) {
+            return text;
+        }
+        return text.substring(0, maxLength) + "... (truncado)";
+    }
+
+    /**
      * Lee el cuerpo de la petición HTTP.
      * 
      * IMPORTANTE: En Play Framework 1.x, cuando el Content-Type es "application/json",
@@ -1514,13 +1528,13 @@ public static void apiEliminarMateria(Long id) {
             // En Play Framework 1.x, el TextParser ya ha leido el body y lo guarda en params.get("body")
             String body = params.get("body");
             if (body != null && !body.trim().isEmpty()) {
-                Logger.debug("[readRequestBody] Body leido desde params.get('body'): %s", body.substring(0, Math.min(100, body.length())));
+                Logger.debug("[readRequestBody] Body leido desde params.get('body'): %s", truncateForLogging(body, 100));
                 return body;
             }
             // Fallback: intentar leer desde request.body si aun no fue consumido
             if (request.body != null) {
                 body = play.libs.IO.readContentAsString(request.body);
-                Logger.debug("[readRequestBody] Body leido desde request.body: %s", body != null ? body.substring(0, Math.min(100, body.length())) : "null");
+                Logger.debug("[readRequestBody] Body leido desde request.body: %s", truncateForLogging(body, 100));
                 return body;
             }
             Logger.warn("[readRequestBody] No se pudo leer el body");
@@ -1575,17 +1589,18 @@ public static void apiEliminarMateria(Long id) {
         }
 
         String body = readRequestBody();
-        Logger.debug("[getCachedJsonBody] Body leido: %s", body != null ? body.substring(0, Math.min(100, body.length())) : "null");
+        Logger.debug("[getCachedJsonBody] Body leido: %s", truncateForLogging(body, 100));
         if (body == null || body.trim().isEmpty()) {
             Logger.warn("[getCachedJsonBody] Body es null o vacio");
             return null;
         }
         try {
-            JsonElement element = new com.google.gson.JsonParser().parse(body);
+            JsonElement element = com.google.gson.JsonParser.parseString(body);
             if (element != null && element.isJsonObject()) {
                 JsonObject obj = element.getAsJsonObject();
                 request.args.put("jsonBody", obj);
-                Logger.info("[getCachedJsonBody] JSON parseado correctamente: %s", obj.toString());
+                // No loguear el JSON completo porque puede contener passwords
+                Logger.info("[getCachedJsonBody] JSON parseado correctamente (%d bytes)", body.length());
                 return obj;
             }
         } catch (Exception e) {
