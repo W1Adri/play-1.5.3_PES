@@ -594,12 +594,19 @@ public static void apiRegister(String username, String password, String email, S
 public static void apiLogin(String username, String password) {
     Map<String, Object> resp = new HashMap<String, Object>();
 
+    Logger.info("[apiLogin] Parametros recibidos: username=%s, password=%s", username, password != null ? "***" : null);
+    Logger.info("[apiLogin] Content-Type: %s", request.contentType);
+    Logger.info("[apiLogin] Method: %s", request.method);
+    
     String resolvedUsername = getParamValue("username", username);
     String resolvedPassword = getParamValue("password", password);
+
+    Logger.info("[apiLogin] Parametros resueltos: username=%s, password=%s", resolvedUsername, resolvedPassword != null ? "***" : null);
 
     if (isBlank(resolvedUsername) || isBlank(resolvedPassword)) {
         resp.put("status", "error");
         resp.put("msg", "Faltan credenciales");
+        Logger.warn("[apiLogin] Credenciales faltantes o vacias");
         renderJSON(resp);
         return;
     }
@@ -1470,8 +1477,22 @@ public static void apiEliminarMateria(Long id) {
 
     private static String readRequestBody() {
         try {
-            return play.libs.IO.readContentAsString(request.body);
+            // En Play Framework 1.x, el TextParser ya ha leido el body y lo guarda en params.get("body")
+            String body = params.get("body");
+            if (body != null && !body.trim().isEmpty()) {
+                Logger.debug("[readRequestBody] Body leido desde params.get('body'): %s", body.substring(0, Math.min(100, body.length())));
+                return body;
+            }
+            // Fallback: intentar leer desde request.body si aun no fue consumido
+            if (request.body != null) {
+                body = play.libs.IO.readContentAsString(request.body);
+                Logger.debug("[readRequestBody] Body leido desde request.body: %s", body != null ? body.substring(0, Math.min(100, body.length())) : "null");
+                return body;
+            }
+            Logger.warn("[readRequestBody] No se pudo leer el body");
+            return null;
         } catch (RuntimeException ex) {
+            Logger.error(ex, "[readRequestBody] Error leyendo body");
             return null;
         }
     }
@@ -1479,16 +1500,21 @@ public static void apiEliminarMateria(Long id) {
     private static String getJsonParam(String key) {
         JsonObject cached = getCachedJsonBody();
         if (cached == null) {
+            Logger.debug("[getJsonParam] JSON body es null para key=%s", key);
             return null;
         }
         try {
             JsonElement value = cached.get(key);
             if (value != null && !value.isJsonNull()) {
-                return value.getAsString();
+                String result = value.getAsString();
+                Logger.debug("[getJsonParam] Extraido key=%s, value=%s", key, key.equals("password") ? "***" : result);
+                return result;
             }
         } catch (Exception e) {
+            Logger.error(e, "[getJsonParam] Error extrayendo key=%s", key);
             return null;
         }
+        Logger.debug("[getJsonParam] No se encontro key=%s en JSON", key);
         return null;
     }
 
@@ -1510,11 +1536,14 @@ public static void apiEliminarMateria(Long id) {
     private static JsonObject getCachedJsonBody() {
         Object cached = request.args.get("jsonBody");
         if (cached instanceof JsonObject) {
+            Logger.debug("[getCachedJsonBody] Retornando JSON cacheado");
             return (JsonObject) cached;
         }
 
         String body = readRequestBody();
+        Logger.debug("[getCachedJsonBody] Body leido: %s", body != null ? body.substring(0, Math.min(100, body.length())) : "null");
         if (body == null || body.trim().isEmpty()) {
+            Logger.warn("[getCachedJsonBody] Body es null o vacio");
             return null;
         }
         try {
@@ -1522,11 +1551,14 @@ public static void apiEliminarMateria(Long id) {
             if (element != null && element.isJsonObject()) {
                 JsonObject obj = element.getAsJsonObject();
                 request.args.put("jsonBody", obj);
+                Logger.info("[getCachedJsonBody] JSON parseado correctamente: %s", obj.toString());
                 return obj;
             }
         } catch (Exception e) {
+            Logger.error(e, "[getCachedJsonBody] Error parseando JSON body");
             return null;
         }
+        Logger.warn("[getCachedJsonBody] Body no es un JSON valido");
         return null;
     }
 
