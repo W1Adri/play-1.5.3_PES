@@ -217,7 +217,11 @@ All Android app API calls match the web app:
 ## Known Limitations
 
 1. **Build Configuration**: Some Gradle/AGP version compatibility issues may need environment-specific adjustments
-2. **ICE Candidates**: Currently using trickle ICE bundled in SDP; for production, explicit ICE candidate exchange would be better
+2. **ICE Candidates**: Currently using trickle ICE bundled in SDP. For production environments with restrictive firewalls or NAT configurations, explicit ICE candidate exchange should be implemented by:
+   - Adding API endpoints for ICE candidate exchange (`POST /reservas/{id}/ice-candidate`)
+   - Handling `onIceCandidate` callback in PeerConnection.Observer
+   - Polling for remote ICE candidates and adding them via `peerConnection.addIceCandidate()`
+   - This would improve connection reliability in complex network topologies
 3. **Message Layout**: Using simple ListView; RecyclerView with custom ViewHolders would provide better performance
 4. **Offline Support**: No local caching; requires active internet connection
 

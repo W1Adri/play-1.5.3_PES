@@ -2,6 +2,7 @@ package com.example.myapplication;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -51,6 +52,13 @@ public class ChatActivity extends AppCompatActivity {
     private long lastMessageId = 0L;
     private Thread pollingThread;
     private volatile boolean isPolling = false;
+    private static final String TAG = "ChatActivity";
+    
+    // Thread-safe date formatter using ThreadLocal
+    private static final ThreadLocal<SimpleDateFormat> INPUT_DATE_FORMAT = 
+        ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()));
+    private static final ThreadLocal<SimpleDateFormat> OUTPUT_DATE_FORMAT = 
+        ThreadLocal.withInitial(() -> new SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()));
 
     private static class ChatTarget {
         final String id;
@@ -287,7 +295,8 @@ public class ChatActivity extends AppCompatActivity {
                     });
                 }
             } catch (Exception e) {
-                // Silently fail during polling to avoid spamming user with errors
+                // Log error but don't spam user during polling
+                Log.e(TAG, "Error during message polling", e);
             }
         }).start();
     }
@@ -295,12 +304,11 @@ public class ChatActivity extends AppCompatActivity {
     private String formatTimestamp(String fecha) {
         if (fecha == null || fecha.isEmpty()) return "";
         try {
-            SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
-            Date date = inputFormat.parse(fecha);
+            Date date = INPUT_DATE_FORMAT.get().parse(fecha);
             if (date == null) return "";
-            SimpleDateFormat outputFormat = new SimpleDateFormat("dd/MM HH:mm", Locale.getDefault());
-            return outputFormat.format(date);
+            return OUTPUT_DATE_FORMAT.get().format(date);
         } catch (Exception e) {
+            Log.w(TAG, "Error formatting timestamp: " + fecha, e);
             return "";
         }
     }
