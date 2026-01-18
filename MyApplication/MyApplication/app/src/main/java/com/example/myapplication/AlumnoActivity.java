@@ -3,6 +3,7 @@ package com.example.myapplication;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -44,6 +45,7 @@ public class AlumnoActivity extends AppCompatActivity {
         Button btnMisInscripciones = findViewById(R.id.btnMisInscripciones);
         Button btnReservas = findViewById(R.id.btnReservas);
         Button btnChat = findViewById(R.id.btnChat);
+        Button btnMenu = findViewById(R.id.btnMenu);
         Button btnLogout = findViewById(R.id.btnLogout);
 
         btnMaterias.setOnClickListener(v -> {
@@ -71,6 +73,35 @@ public class AlumnoActivity extends AppCompatActivity {
             i.putExtra("username", username);
             i.putExtra("userId", userId);
             startActivity(i);
+        });
+
+        btnMenu.setOnClickListener(v -> {
+            PopupMenu menu = new PopupMenu(this, v);
+            menu.getMenu().add("Materias");
+            menu.getMenu().add("Mis inscripciones");
+            menu.getMenu().add("Reservas");
+            menu.getMenu().add("Chat");
+            menu.getMenu().add("Consultas");
+            menu.getMenu().add("Cerrar sesión");
+            menu.setOnMenuItemClickListener(item -> {
+                String title = item.getTitle().toString();
+                if ("Materias".equals(title)) {
+                    btnMaterias.performClick();
+                } else if ("Mis inscripciones".equals(title)) {
+                    btnMisInscripciones.performClick();
+                } else if ("Reservas".equals(title)) {
+                    btnReservas.performClick();
+                } else if ("Chat".equals(title)) {
+                    btnChat.performClick();
+                } else if ("Consultas".equals(title)) {
+                    Intent i = new Intent(this, ConsultasActivity.class);
+                    startActivity(i);
+                } else if ("Cerrar sesión".equals(title)) {
+                    btnLogout.performClick();
+                }
+                return true;
+            });
+            menu.show();
         });
 
         btnLogout.setOnClickListener(v -> {

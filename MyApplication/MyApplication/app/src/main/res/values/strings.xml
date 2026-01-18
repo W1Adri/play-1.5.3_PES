@@ -4,4 +4,14 @@
         <item>Alumno</item>
         <item>Profesor</item>
     </string-array>
+    <string-array name="consultas_array">
+        <item>totalUsuarios</item>
+        <item>totalAlumnos</item>
+        <item>totalProfesores</item>
+        <item>profesoresMateria</item>
+        <item>alumnosMateria</item>
+        <item>reservasPorMateria</item>
+        <item>topAlumnos</item>
+        <item>topProfesores</item>
+    </string-array>
 </resources>

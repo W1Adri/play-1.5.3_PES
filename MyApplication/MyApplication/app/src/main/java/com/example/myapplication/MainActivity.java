@@ -10,8 +10,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -65,10 +63,10 @@ public class MainActivity extends AppCompatActivity {
 
             new Thread(() -> {
                 try {
-                    Map<String, String> params = new HashMap<>();
-                    params.put("username", user);
-                    params.put("password", pass);
-                    ApiClient.ApiResponse response = ApiClient.postForm("/api/login", params);
+                    JSONObject payload = new JSONObject();
+                    payload.put("username", user);
+                    payload.put("password", pass);
+                    ApiClient.ApiResponse response = ApiClient.postJson("/api/login", payload);
                     JSONObject json = ApiClient.parseJson(response.body);
 
                     if (response.code >= 200 && response.code < 300 && json != null) {

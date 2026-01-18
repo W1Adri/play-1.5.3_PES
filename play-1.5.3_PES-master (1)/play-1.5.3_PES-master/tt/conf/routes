@@ -20,6 +20,20 @@ POST    /api/register                     Application.apiRegister
 POST    /api/login                        Application.apiLogin
 GET     /api/me                           Application.apiMe
 POST    /api/logout                       Application.apiLogout
+GET     /api/materias                     Application.apiMaterias
+GET     /api/materia/{id}                 Application.apiMateria
+GET     /api/inscripciones                Application.apiInscripciones
+POST    /api/inscripciones                Application.apiInscribirse(materiaId, profesorId)
+GET     /api/reservas                     Application.apiReservas
+GET     /api/reservas/{reservaId}         Application.apiReserva(reservaId)
+POST    /api/reservas                     Application.apiCrearReserva(inscripcionId, fecha, hora)
+GET     /api/consultas                    Application.apiConsultas(tipo, materiaId)
+GET     /api/gestion/usuarios             Application.apiGestionUsuarios
+GET     /api/gestion/materias             Application.apiGestionMaterias
+POST    /api/gestion/usuarios/actualizar  Application.apiActualizarUsuario(id, username, email, fullName, rol)
+POST    /api/gestion/usuarios/eliminar    Application.apiEliminarUsuario(id)
+POST    /api/gestion/materias/actualizar  Application.apiActualizarMateria(id, codigo, nombre, descripcion)
+POST    /api/gestion/materias/eliminar    Application.apiEliminarMateria(id)
 
 # --- Paneles de Usuario ---
 GET     /panel/alumno                       Application.panelAlumno
