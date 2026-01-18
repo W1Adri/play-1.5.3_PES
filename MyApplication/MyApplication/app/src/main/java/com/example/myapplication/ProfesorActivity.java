@@ -43,6 +43,7 @@ public class ProfesorActivity extends AppCompatActivity {
         Button btnMisAlumnos = findViewById(R.id.btnMisAlumnos);
         Button btnReservas = findViewById(R.id.btnReservas);
         Button btnChat = findViewById(R.id.btnChat);
+        Button btnConsultas = findViewById(R.id.btnConsultas);
         Button btnGestion = findViewById(R.id.btnGestion);
         Button btnLogout = findViewById(R.id.btnLogout);
 
@@ -56,6 +57,7 @@ public class ProfesorActivity extends AppCompatActivity {
         btnReservas.setOnClickListener(v -> {
             Intent i = new Intent(this, ReservasActivity.class);
             i.putExtra("rol", rol);
+            i.putExtra("userId", userId);
             startActivity(i);
         });
 
@@ -68,9 +70,12 @@ public class ProfesorActivity extends AppCompatActivity {
         });
 
         btnGestion.setOnClickListener(v -> {
-            // De momento lo dejamos para después
-            Intent i = new Intent(this, MateriasActivity.class);
-            i.putExtra("rol", rol);
+            Intent i = new Intent(this, GestionActivity.class);
+            startActivity(i);
+        });
+
+        btnConsultas.setOnClickListener(v -> {
+            Intent i = new Intent(this, ConsultasActivity.class);
             startActivity(i);
         });
 

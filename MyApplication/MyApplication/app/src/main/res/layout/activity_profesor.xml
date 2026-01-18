@@ -84,6 +84,15 @@
             android:layout_marginTop="10dp" />
 
         <Button
+            android:id="@+id/btnConsultas"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📊 Consultas"
+            android:textColor="@color/white"
+            android:background="@drawable/button_primary"
+            android:layout_marginTop="10dp" />
+
+        <Button
             android:id="@+id/btnGestion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

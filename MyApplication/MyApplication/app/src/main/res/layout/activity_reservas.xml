@@ -19,7 +19,7 @@
         android:id="@+id/txtSub"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Listado (mock)"
+        android:text="Listado de reservas"
         android:layout_marginTop="6dp"
         android:textColor="@color/brand_text_secondary" />
 
@@ -41,7 +41,7 @@
         android:id="@+id/btnCrear"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="➕ Crear reserva (mock)"
+        android:text="➕ Crear reserva"
         android:textColor="@color/white"
         android:background="@drawable/button_primary"
         android:layout_marginTop="12dp"/>

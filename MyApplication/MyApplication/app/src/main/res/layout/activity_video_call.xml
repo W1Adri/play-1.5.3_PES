@@ -3,46 +3,45 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="18dp"
+    android:padding="12dp"
     android:background="@drawable/bg_gradient_blue">
 
     <TextView
         android:id="@+id/txtTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Chat"
+        android:text="Videollamada"
         android:textStyle="bold"
-        android:textSize="24sp"
+        android:textSize="22sp"
         android:textColor="@color/brand_text_primary" />
 
     <TextView
-        android:id="@+id/txtSub"
+        android:id="@+id/txtStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Conversación"
+        android:text="Preparado"
         android:layout_marginTop="6dp"
         android:textColor="@color/brand_text_secondary" />
 
-    <ListView
-        android:id="@+id/listChat"
+    <org.webrtc.SurfaceViewRenderer
+        android:id="@+id/remoteView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_marginTop="12dp" />
 
+    <org.webrtc.SurfaceViewRenderer
+        android:id="@+id/localView"
+        android:layout_width="160dp"
+        android:layout_height="120dp"
+        android:layout_marginTop="8dp" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="10dp">
+        android:layout_marginTop="12dp">
 
-        <EditText
-            android:id="@+id/edtMsg"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="Escribe un mensaje..."
-            android:background="@drawable/input_background" />
         <Button
             android:id="@+id/btnBack"
             android:layout_width="wrap_content"
@@ -52,10 +51,20 @@
             android:background="@drawable/button_secondary" />
 
         <Button
-            android:id="@+id/btnSend"
+            android:id="@+id/btnReset"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Enviar"
+            android:layout_marginStart="8dp"
+            android:text="Reset"
+            android:textColor="@color/brand_primary"
+            android:background="@drawable/button_secondary" />
+
+        <Button
+            android:id="@+id/btnStart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Iniciar"
             android:textColor="@color/white"
             android:background="@drawable/button_primary" />
     </LinearLayout>

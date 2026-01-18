@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="18dp"
+    android:background="@drawable/bg_gradient_blue">
+
+    <TextView
+        android:id="@+id/txtTitulo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Materia"
+        android:textStyle="bold"
+        android:textSize="22sp"
+        android:textColor="@color/brand_text_primary" />
+
+    <TextView
+        android:id="@+id/txtCodigo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Código"
+        android:layout_marginTop="6dp"
+        android:textColor="@color/brand_text_secondary" />
+
+    <TextView
+        android:id="@+id/txtDescripcion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Descripción"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/brand_text_primary" />
+
+    <TextView
+        android:id="@+id/txtEstado"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Estado"
+        android:layout_marginTop="10dp"
+        android:textColor="@color/brand_text_secondary" />
+
+    <Button
+        android:id="@+id/btnInscribirse"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Inscribirse"
+        android:textColor="@color/white"
+        android:background="@drawable/button_primary"
+        android:layout_marginTop="14dp" />
+
+    <Button
+        android:id="@+id/btnBack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="← Volver"
+        android:textColor="@color/brand_primary"
+        android:background="@drawable/button_secondary"
+        android:layout_marginTop="12dp" />
+</LinearLayout>

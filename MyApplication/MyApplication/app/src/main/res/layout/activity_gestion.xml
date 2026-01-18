@@ -10,25 +10,18 @@
         android:id="@+id/txtTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Chat"
+        android:text="Gestión"
         android:textStyle="bold"
-        android:textSize="24sp"
+        android:textSize="22sp"
         android:textColor="@color/brand_text_primary" />
 
     <TextView
-        android:id="@+id/txtSub"
+        android:id="@+id/txtModo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Conversación"
+        android:text="Gestión de usuarios"
         android:layout_marginTop="6dp"
         android:textColor="@color/brand_text_secondary" />
-
-    <ListView
-        android:id="@+id/listChat"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="12dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -36,27 +29,39 @@
         android:orientation="horizontal"
         android:layout_marginTop="10dp">
 
-        <EditText
-            android:id="@+id/edtMsg"
+        <Button
+            android:id="@+id/btnUsuarios"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Escribe un mensaje..."
-            android:background="@drawable/input_background" />
-        <Button
-            android:id="@+id/btnBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="← Volver"
-            android:textColor="@color/brand_primary"
-            android:background="@drawable/button_secondary" />
+            android:text="Usuarios"
+            android:textColor="@color/white"
+            android:background="@drawable/button_primary" />
 
         <Button
-            android:id="@+id/btnSend"
-            android:layout_width="wrap_content"
+            android:id="@+id/btnMaterias"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Enviar"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Materias"
             android:textColor="@color/white"
             android:background="@drawable/button_primary" />
     </LinearLayout>
+
+    <ListView
+        android:id="@+id/listGestion"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="10dp" />
+
+    <Button
+        android:id="@+id/btnBack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="← Volver"
+        android:textColor="@color/brand_primary"
+        android:background="@drawable/button_secondary"
+        android:layout_marginTop="12dp" />
 </LinearLayout>

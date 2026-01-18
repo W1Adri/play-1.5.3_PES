@@ -20,6 +20,21 @@ POST    /api/register                     Application.apiRegister
 POST    /api/login                        Application.apiLogin
 GET     /api/me                           Application.apiMe
 POST    /api/logout                       Application.apiLogout
+GET     /api/materias                     Application.apiMaterias(soloInscritas, modoProfesor)
+GET     /api/materias/todas               Application.apiMateriasTodas
+POST    /api/inscribirse                  Application.apiInscribirse(id, profesorId)
+GET     /api/inscripciones/opciones       Application.apiInscripcionesOpciones
+GET     /api/reservas                     Application.apiReservas
+POST    /api/reservas                     Application.apiCrearReserva(inscripcionId, fecha, hora)
+GET     /api/consultas                    Application.apiConsultas(tipo, materiaId)
+GET     /api/gestion/usuarios             Application.apiGestionUsuarios
+GET     /api/gestion/materias             Application.apiGestionMaterias
+POST    /api/gestion/usuarios/actualizar  Application.apiActualizarUsuario(id, username, email, fullName, rol)
+POST    /api/gestion/usuarios/eliminar    Application.apiEliminarUsuario(id)
+POST    /api/gestion/materias/actualizar  Application.apiActualizarMateria(id, codigo, nombre, descripcion)
+POST    /api/gestion/materias/eliminar    Application.apiEliminarMateria(id)
+GET     /api/chat/partners                Application.apiChatPartners
+GET     /api/reservas/{reservaId}/video-config Application.apiVideoConfig(reservaId)
 
 # --- Paneles de Usuario ---
 GET     /panel/alumno                       Application.panelAlumno

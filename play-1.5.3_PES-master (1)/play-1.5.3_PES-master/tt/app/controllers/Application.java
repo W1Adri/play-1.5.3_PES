@@ -651,6 +651,739 @@ public static void apiLogout() {
     renderJSON(resp);
 }
 
+// --- API MATERIAS ---
+public static void apiMaterias(Boolean soloInscritas, Boolean modoProfesor) {
+    Map<String, Object> resp = new HashMap<String, Object>();
+    Usuario yo = connected();
+    if (yo == null) {
+        resp.put("status", "error");
+        resp.put("msg", "No logueado");
+        renderJSON(resp);
+        return;
+    }
+
+    boolean solo = soloInscritas != null && soloInscritas;
+    boolean profesorView = modoProfesor != null && modoProfesor;
+
+    if (profesorView) {
+        if (yo.rol != Rol.PROFESOR) {
+            resp.put("status", "error");
+            resp.put("msg", "Acceso no autorizado");
+            renderJSON(resp);
+            return;
+        }
+        List<Inscripcion> misAlumnos = Inscripcion.find("byProfesor", yo).fetch();
+        List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
+        for (Inscripcion inscripcion : misAlumnos) {
+            if (inscripcion == null || inscripcion.alumno == null || inscripcion.materia == null) continue;
+            Map<String, Object> item = new HashMap<String, Object>();
+            item.put("id", inscripcion.id);
+            item.put("alumno", toUsuarioDto(inscripcion.alumno));
+            item.put("materia", toMateriaDto(inscripcion.materia));
+            data.add(item);
+        }
+        resp.put("status", "ok");
+        resp.put("inscripciones", data);
+        renderJSON(resp);
+        return;
+    }
+
+    if (yo.rol != Rol.ALUMNO) {
+        resp.put("status", "error");
+        resp.put("msg", "Acceso no autorizado");
+        renderJSON(resp);
+        return;
+    }
+
+    List<Materia> materias = Materia.findAll();
+    List<Inscripcion> misInscripciones = Inscripcion.find("byAlumno", yo).fetch();
+    Set<Long> materiasInscritas = new HashSet<Long>();
+    for (Inscripcion inscripcion : misInscripciones) {
+        if (inscripcion != null && inscripcion.materia != null) {
+            materiasInscritas.add(inscripcion.materia.id);
+        }
+    }
+
+    List<Usuario> profesores = Usuario.find("byRol", Rol.PROFESOR).fetch();
+    List<Map<String, Object>> profesoresDto = new ArrayList<Map<String, Object>>();
+    for (Usuario profesor : profesores) {
+        profesoresDto.add(toUsuarioDto(profesor));
+    }
+
+    List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
+    for (Materia materia : materias) {
+        if (materia == null) continue;
+        boolean inscrita = materiasInscritas.contains(materia.id);
+        if (solo && !inscrita) continue;
+        Map<String, Object> item = toMateriaDto(materia);
+        item.put("inscrita", inscrita);
+        item.put("profesores", profesoresDto);
+        data.add(item);
+    }
+
+    resp.put("status", "ok");
+    resp.put("materias", data);
+    renderJSON(resp);
+}
+
+// --- API MATERIAS TODAS (CATÁLOGO) ---
+public static void apiMateriasTodas() {
+    Map<String, Object> resp = new HashMap<String, Object>();
+    Usuario yo = connected();
+    if (yo == null) {
+        resp.put("status", "error");
+        resp.put("msg", "No logueado");
+        renderJSON(resp);
+        return;
+    }
+
+    List<Materia> materias = Materia.findAll();
+    List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
+    for (Materia materia : materias) {
+        data.add(toMateriaDto(materia));
+    }
+
+    resp.put("status", "ok");
+    resp.put("materias", data);
+    renderJSON(resp);
+}
+
+// --- API INSCRIBIRSE ---
+public static void apiInscribirse(Long id, Long profesorId) {
+    Map<String, Object> resp = new HashMap<String, Object>();
+    Usuario alumno = connected();
+    if (alumno == null) {
+        resp.put("status", "error");
+        resp.put("msg", "No logueado");
+        renderJSON(resp);
+        return;
+    }
+    if (alumno.rol != Rol.ALUMNO) {
+        resp.put("status", "error");
+        resp.put("msg", "Solo alumnos");
+        renderJSON(resp);
+        return;
+    }
+
+    Materia materia = Materia.findById(id);
+    Usuario profesor = Usuario.findById(profesorId);
+    if (materia == null || profesor == null) {
+        resp.put("status", "error");
+        resp.put("msg", "Materia o profesor no válidos");
+        renderJSON(resp);
+        return;
+    }
+
+    Inscripcion existente = Inscripcion.find("byAlumnoAndMateriaAndProfesor", alumno, materia, profesor).first();
+    if (existente != null) {
+        resp.put("status", "error");
+        resp.put("msg", "Ya inscrito");
+        renderJSON(resp);
+        return;
+    }
+
+    new Inscripcion(alumno, profesor, materia).save();
+    resp.put("status", "ok");
+    resp.put("msg", "Inscripción creada");
+    renderJSON(resp);
+}
+
+// --- API INSCRIPCIONES PARA RESERVAS ---
+public static void apiInscripcionesOpciones() {
+    Map<String, Object> resp = new HashMap<String, Object>();
+    Usuario yo = connected();
+    if (yo == null) {
+        resp.put("status", "error");
+        resp.put("msg", "No logueado");
+        renderJSON(resp);
+        return;
+    }
+
+    List<Inscripcion> opciones;
+    if (yo.rol == Rol.ALUMNO) {
+        opciones = Inscripcion.find("byAlumno", yo).fetch();
+    } else if (yo.rol == Rol.PROFESOR) {
+        opciones = Inscripcion.find("byProfesor", yo).fetch();
+    } else {
+        opciones = Collections.emptyList();
+    }
+
+    List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
+    for (Inscripcion inscripcion : opciones) {
+        if (inscripcion == null) continue;
+        Map<String, Object> item = new HashMap<String, Object>();
+        item.put("id", inscripcion.id);
+        item.put("materia", toMateriaDto(inscripcion.materia));
+        item.put("alumno", toUsuarioDto(inscripcion.alumno));
+        item.put("profesor", toUsuarioDto(inscripcion.profesor));
+        data.add(item);
+    }
+
+    resp.put("status", "ok");
+    resp.put("inscripciones", data);
+    renderJSON(resp);
+}
+
+// --- API RESERVAS ---
+public static void apiReservas() {
+    Map<String, Object> resp = new HashMap<String, Object>();
+    Usuario yo = connected();
+    if (yo == null) {
+        resp.put("status", "error");
+        resp.put("msg", "No logueado");
+        renderJSON(resp);
+        return;
+    }
+
+    List<Reserva> reservas;
+    if (yo.rol == Rol.ALUMNO) {
+        reservas = Reserva.find("alumno = ?1 ORDER BY fechaReserva ASC", yo).fetch();
+    } else if (yo.rol == Rol.PROFESOR) {
+        reservas = Reserva.find("profesor = ?1 ORDER BY fechaReserva ASC", yo).fetch();
+    } else {
+        reservas = Collections.emptyList();
+    }
+
+    List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
+    for (Reserva reserva : reservas) {
+        if (reserva == null) continue;
+        Map<String, Object> item = new HashMap<String, Object>();
+        item.put("id", reserva.id);
+        item.put("fechaReserva", reserva.fechaReserva != null ? reserva.fechaReserva.getTime() : null);
+        item.put("materia", toMateriaDto(reserva.materia));
+        item.put("alumno", toUsuarioDto(reserva.alumno));
+        item.put("profesor", toUsuarioDto(reserva.profesor));
+        item.put("codigoSala", reserva.codigoSala);
+        data.add(item);
+    }
+
+    resp.put("status", "ok");
+    resp.put("reservas", data);
+    renderJSON(resp);
+}
+
+// --- API CREAR RESERVA ---
+public static void apiCrearReserva(Long inscripcionId, String fecha, String hora) {
+    Map<String, Object> resp = new HashMap<String, Object>();
+    Usuario yo = connected();
+    if (yo == null) {
+        resp.put("status", "error");
+        resp.put("msg", "No logueado");
+        renderJSON(resp);
+        return;
+    }
+
+    if (inscripcionId == null) {
+        resp.put("status", "error");
+        resp.put("msg", "Inscripción inválida");
+        renderJSON(resp);
+        return;
+    }
+
+    Inscripcion inscripcion = Inscripcion.findById(inscripcionId);
+    if (inscripcion == null) {
+        resp.put("status", "error");
+        resp.put("msg", "Inscripción no encontrada");
+        renderJSON(resp);
+        return;
+    }
+
+    if (!yo.id.equals(inscripcion.alumno.id) && !yo.id.equals(inscripcion.profesor.id)) {
+        resp.put("status", "error");
+        resp.put("msg", "No autorizado");
+        renderJSON(resp);
+        return;
+    }
+
+    if (fecha == null || fecha.trim().isEmpty() || hora == null || hora.trim().isEmpty()) {
+        resp.put("status", "error");
+        resp.put("msg", "Fecha y hora requeridas");
+        renderJSON(resp);
+        return;
+    }
+
+    Date fechaReserva;
+    try {
+        SimpleDateFormat formato = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        formato.setLenient(false);
+        fechaReserva = formato.parse(fecha.trim() + " " + hora.trim());
+    } catch (ParseException e) {
+        resp.put("status", "error");
+        resp.put("msg", "Formato de fecha u hora inválido");
+        renderJSON(resp);
+        return;
+    }
+
+    Reserva nueva = new Reserva(inscripcion.profesor, inscripcion.alumno, inscripcion.materia, fechaReserva);
+    nueva.save();
+
+    resp.put("status", "ok");
+    resp.put("msg", "Reserva creada");
+    resp.put("reservaId", nueva.id);
+    renderJSON(resp);
+}
+
+// --- API CONSULTAS ---
+public static void apiConsultas(String tipo, Long materiaId) {
+    Map<String, Object> resp = new HashMap<String, Object>();
+    Usuario yo = connected();
+    if (yo == null) {
+        resp.put("status", "error");
+        resp.put("msg", "No logueado");
+        renderJSON(resp);
+        return;
+    }
+
+    List<Map<String, Object>> detalleUsuarios = new ArrayList<Map<String, Object>>();
+    List<Map<String, Object>> ranking = new ArrayList<Map<String, Object>>();
+    Long resultado = null;
+    String descripcion = null;
+    String error = null;
+
+    if (tipo != null && !tipo.trim().isEmpty()) {
+        tipo = tipo.trim();
+        if ("totalUsuarios".equals(tipo)) {
+            resultado = Usuario.count();
+            descripcion = "Usuarios registrados";
+        } else if ("totalAlumnos".equals(tipo)) {
+            resultado = Usuario.count("rol = ?1", Rol.ALUMNO);
+            descripcion = "Alumnos registrados";
+        } else if ("totalProfesores".equals(tipo)) {
+            resultado = Usuario.count("rol = ?1", Rol.PROFESOR);
+            descripcion = "Profesores registrados";
+        } else if ("profesoresMateria".equals(tipo) || "alumnosMateria".equals(tipo)) {
+            if (materiaId == null) {
+                error = "Selecciona una materia para realizar la consulta.";
+            } else {
+                Materia materiaSeleccionada = Materia.findById(materiaId);
+                if (materiaSeleccionada == null) {
+                    error = "La materia indicada no existe.";
+                } else {
+                    List<Inscripcion> inscripciones = Inscripcion.find("byMateria", materiaSeleccionada).fetch();
+                    LinkedHashMap<Long, Usuario> usuariosUnicos = new LinkedHashMap<Long, Usuario>();
+                    for (Inscripcion inscripcion : inscripciones) {
+                        if ("profesoresMateria".equals(tipo) && inscripcion.profesor != null) {
+                            usuariosUnicos.put(inscripcion.profesor.id, inscripcion.profesor);
+                        }
+                        if ("alumnosMateria".equals(tipo) && inscripcion.alumno != null) {
+                            usuariosUnicos.put(inscripcion.alumno.id, inscripcion.alumno);
+                        }
+                    }
+                    for (Usuario usuario : usuariosUnicos.values()) {
+                        detalleUsuarios.add(toUsuarioDto(usuario));
+                    }
+                    resultado = Long.valueOf(detalleUsuarios.size());
+                    if ("profesoresMateria".equals(tipo)) {
+                        descripcion = "Profesores registrados en " + materiaSeleccionada.nombre;
+                    } else {
+                        descripcion = "Alumnos inscritos en " + materiaSeleccionada.nombre;
+                    }
+                }
+            }
+        } else if ("reservasPorMateria".equals(tipo)) {
+            List<Object[]> filas = Reserva.find(
+                    "select r.materia.nombre, count(r) from Reserva r group by r.materia.nombre order by count(r) desc"
+            ).fetch();
+            for (Object[] fila : filas) {
+                Map<String, Object> item = new HashMap<String, Object>();
+                item.put("label", fila[0]);
+                item.put("count", fila[1]);
+                ranking.add(item);
+            }
+            descripcion = "Reservas totales por materia";
+        } else if ("topAlumnos".equals(tipo)) {
+            List<Object[]> filas = Reserva.find(
+                    "select r.alumno.fullName, r.alumno.username, count(r) " +
+                            "from Reserva r group by r.alumno.id, r.alumno.fullName, r.alumno.username order by count(r) desc"
+            ).fetch();
+            for (Object[] fila : filas) {
+                Map<String, Object> item = new HashMap<String, Object>();
+                item.put("label", fila[0] + " · " + fila[1]);
+                item.put("count", fila[2]);
+                ranking.add(item);
+            }
+            descripcion = "Alumnos con más reservas";
+        } else if ("topProfesores".equals(tipo)) {
+            List<Object[]> filas = Inscripcion.find(
+                    "select i.profesor.fullName, i.profesor.username, count(i) " +
+                            "from Inscripcion i group by i.profesor.id, i.profesor.fullName, i.profesor.username order by count(i) desc"
+            ).fetch();
+            for (Object[] fila : filas) {
+                Map<String, Object> item = new HashMap<String, Object>();
+                item.put("label", fila[0] + " · " + fila[1]);
+                item.put("count", fila[2]);
+                ranking.add(item);
+            }
+            descripcion = "Profesores con más alumnos";
+        } else {
+            error = "Consulta no reconocida.";
+        }
+    }
+
+    resp.put("status", error == null ? "ok" : "error");
+    resp.put("descripcion", descripcion);
+    resp.put("resultado", resultado);
+    resp.put("detalleUsuarios", detalleUsuarios);
+    resp.put("ranking", ranking);
+    if (error != null) {
+        resp.put("msg", error);
+    }
+    renderJSON(resp);
+}
+
+// --- API GESTIÓN USUARIOS (LISTADO) ---
+public static void apiGestionUsuarios() {
+    Map<String, Object> resp = new HashMap<String, Object>();
+    Usuario profesor = connected();
+    if (profesor == null) {
+        resp.put("status", "error");
+        resp.put("msg", "No logueado");
+        renderJSON(resp);
+        return;
+    }
+    if (profesor.rol != Rol.PROFESOR) {
+        resp.put("status", "error");
+        resp.put("msg", "Acceso no autorizado");
+        renderJSON(resp);
+        return;
+    }
+
+    List<Usuario> usuarios = Usuario.findAll();
+    List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
+    for (Usuario usuario : usuarios) {
+        data.add(toUsuarioGestionDto(usuario));
+    }
+
+    resp.put("status", "ok");
+    resp.put("usuarios", data);
+    renderJSON(resp);
+}
+
+// --- API GESTIÓN MATERIAS (LISTADO) ---
+public static void apiGestionMaterias() {
+    Map<String, Object> resp = new HashMap<String, Object>();
+    Usuario profesor = connected();
+    if (profesor == null) {
+        resp.put("status", "error");
+        resp.put("msg", "No logueado");
+        renderJSON(resp);
+        return;
+    }
+    if (profesor.rol != Rol.PROFESOR) {
+        resp.put("status", "error");
+        resp.put("msg", "Acceso no autorizado");
+        renderJSON(resp);
+        return;
+    }
+
+    List<Materia> materias = Materia.findAll();
+    List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
+    for (Materia materia : materias) {
+        data.add(toMateriaDto(materia));
+    }
+
+    resp.put("status", "ok");
+    resp.put("materias", data);
+    renderJSON(resp);
+}
+
+// --- API GESTIÓN USUARIOS (ACTUALIZAR) ---
+public static void apiActualizarUsuario(Long id, String username, String email, String fullName, String rol) {
+    Map<String, Object> resp = new HashMap<String, Object>();
+    Usuario profesor = connected();
+    if (profesor == null) {
+        resp.put("status", "error");
+        resp.put("msg", "No logueado");
+        renderJSON(resp);
+        return;
+    }
+    if (profesor.rol != Rol.PROFESOR) {
+        resp.put("status", "error");
+        resp.put("msg", "Acceso no autorizado");
+        renderJSON(resp);
+        return;
+    }
+
+    Usuario usuario = Usuario.findById(id);
+    if (usuario == null) {
+        resp.put("status", "error");
+        resp.put("msg", "Usuario no encontrado");
+        renderJSON(resp);
+        return;
+    }
+
+    if (username == null || username.trim().isEmpty()) {
+        resp.put("status", "error");
+        resp.put("msg", "El nombre de usuario no puede estar vacío");
+        renderJSON(resp);
+        return;
+    }
+    if (email == null || email.trim().isEmpty()) {
+        resp.put("status", "error");
+        resp.put("msg", "El email no puede estar vacío");
+        renderJSON(resp);
+        return;
+    }
+    if (fullName == null || fullName.trim().isEmpty()) {
+        resp.put("status", "error");
+        resp.put("msg", "El nombre completo no puede estar vacío");
+        renderJSON(resp);
+        return;
+    }
+
+    username = username.trim().toLowerCase();
+    email = email.trim().toLowerCase();
+    fullName = fullName.trim();
+
+    Usuario existenteUsername = Usuario.find("byUsername", username).first();
+    if (existenteUsername != null && !existenteUsername.id.equals(usuario.id)) {
+        resp.put("status", "error");
+        resp.put("msg", "El nombre de usuario ya está en uso");
+        renderJSON(resp);
+        return;
+    }
+
+    Usuario existenteEmail = Usuario.find("byEmail", email).first();
+    if (existenteEmail != null && !existenteEmail.id.equals(usuario.id)) {
+        resp.put("status", "error");
+        resp.put("msg", "El email ya está en uso");
+        renderJSON(resp);
+        return;
+    }
+
+    Rol rolEnum;
+    if ("alumno".equalsIgnoreCase(rol)) {
+        rolEnum = Rol.ALUMNO;
+    } else if ("profesor".equalsIgnoreCase(rol)) {
+        rolEnum = Rol.PROFESOR;
+    } else {
+        resp.put("status", "error");
+        resp.put("msg", "Rol inválido");
+        renderJSON(resp);
+        return;
+    }
+
+    usuario.username = username;
+    usuario.email = email;
+    usuario.fullName = fullName;
+    usuario.rol = rolEnum;
+    usuario.save();
+
+    resp.put("status", "ok");
+    resp.put("msg", "Usuario actualizado");
+    resp.put("usuario", toUsuarioGestionDto(usuario));
+    renderJSON(resp);
+}
+
+// --- API GESTIÓN USUARIOS (ELIMINAR) ---
+public static void apiEliminarUsuario(Long id) {
+    Map<String, Object> resp = new HashMap<String, Object>();
+    Usuario profesor = connected();
+    if (profesor == null) {
+        resp.put("status", "error");
+        resp.put("msg", "No logueado");
+        renderJSON(resp);
+        return;
+    }
+    if (profesor.rol != Rol.PROFESOR) {
+        resp.put("status", "error");
+        resp.put("msg", "Acceso no autorizado");
+        renderJSON(resp);
+        return;
+    }
+
+    Usuario usuario = Usuario.findById(id);
+    if (usuario == null) {
+        resp.put("status", "error");
+        resp.put("msg", "Usuario no encontrado");
+        renderJSON(resp);
+        return;
+    }
+
+    if (usuario.id.equals(profesor.id)) {
+        resp.put("status", "error");
+        resp.put("msg", "No puedes eliminar tu propio usuario");
+        renderJSON(resp);
+        return;
+    }
+
+    long inscripcionesAlumno = Inscripcion.count("alumno = ?1", usuario);
+    long inscripcionesProfesor = Inscripcion.count("profesor = ?1", usuario);
+    long reservasAlumno = Reserva.count("alumno = ?1", usuario);
+    long reservasProfesor = Reserva.count("profesor = ?1", usuario);
+    long mensajesEnviados = Mensaje.count("emisor = ?1", usuario);
+    long mensajesRecibidos = Mensaje.count("receptor = ?1", usuario);
+
+    if (inscripcionesAlumno + inscripcionesProfesor + reservasAlumno + reservasProfesor + mensajesEnviados + mensajesRecibidos > 0) {
+        resp.put("status", "error");
+        resp.put("msg", "No se puede eliminar: el usuario tiene relaciones activas");
+        renderJSON(resp);
+        return;
+    }
+
+    usuario.delete();
+    resp.put("status", "ok");
+    resp.put("msg", "Usuario eliminado");
+    renderJSON(resp);
+}
+
+// --- API GESTIÓN MATERIAS (ACTUALIZAR) ---
+public static void apiActualizarMateria(Long id, String codigo, String nombre, String descripcion) {
+    Map<String, Object> resp = new HashMap<String, Object>();
+    Usuario profesor = connected();
+    if (profesor == null) {
+        resp.put("status", "error");
+        resp.put("msg", "No logueado");
+        renderJSON(resp);
+        return;
+    }
+    if (profesor.rol != Rol.PROFESOR) {
+        resp.put("status", "error");
+        resp.put("msg", "Acceso no autorizado");
+        renderJSON(resp);
+        return;
+    }
+
+    Materia materia = Materia.findById(id);
+    if (materia == null) {
+        resp.put("status", "error");
+        resp.put("msg", "Materia no encontrada");
+        renderJSON(resp);
+        return;
+    }
+
+    if (codigo == null || codigo.trim().isEmpty()) {
+        resp.put("status", "error");
+        resp.put("msg", "El código no puede estar vacío");
+        renderJSON(resp);
+        return;
+    }
+    if (nombre == null || nombre.trim().isEmpty()) {
+        resp.put("status", "error");
+        resp.put("msg", "El nombre no puede estar vacío");
+        renderJSON(resp);
+        return;
+    }
+
+    codigo = codigo.trim().toUpperCase();
+    nombre = nombre.trim();
+    descripcion = descripcion != null ? descripcion.trim() : null;
+
+    Materia existente = Materia.find("byCodigo", codigo).first();
+    if (existente != null && !existente.id.equals(materia.id)) {
+        resp.put("status", "error");
+        resp.put("msg", "El código ya está en uso");
+        renderJSON(resp);
+        return;
+    }
+
+    materia.codigo = codigo;
+    materia.nombre = nombre;
+    materia.descripcion = descripcion;
+    materia.save();
+
+    resp.put("status", "ok");
+    resp.put("msg", "Materia actualizada");
+    resp.put("materia", toMateriaDto(materia));
+    renderJSON(resp);
+}
+
+// --- API GESTIÓN MATERIAS (ELIMINAR) ---
+public static void apiEliminarMateria(Long id) {
+    Map<String, Object> resp = new HashMap<String, Object>();
+    Usuario profesor = connected();
+    if (profesor == null) {
+        resp.put("status", "error");
+        resp.put("msg", "No logueado");
+        renderJSON(resp);
+        return;
+    }
+    if (profesor.rol != Rol.PROFESOR) {
+        resp.put("status", "error");
+        resp.put("msg", "Acceso no autorizado");
+        renderJSON(resp);
+        return;
+    }
+
+    Materia materia = Materia.findById(id);
+    if (materia == null) {
+        resp.put("status", "error");
+        resp.put("msg", "Materia no encontrada");
+        renderJSON(resp);
+        return;
+    }
+
+    long inscripciones = Inscripcion.count("materia = ?1", materia);
+    long reservas = Reserva.count("materia = ?1", materia);
+    if (inscripciones + reservas > 0) {
+        resp.put("status", "error");
+        resp.put("msg", "No se puede eliminar: la materia tiene relaciones activas");
+        renderJSON(resp);
+        return;
+    }
+
+    materia.delete();
+    resp.put("status", "ok");
+    resp.put("msg", "Materia eliminada");
+    renderJSON(resp);
+}
+
+// --- API CHAT PARTNERS ---
+public static void apiChatPartners() {
+    Map<String, Object> resp = new HashMap<String, Object>();
+    Usuario yo = connected();
+    if (yo == null) {
+        resp.put("status", "error");
+        resp.put("msg", "No logueado");
+        renderJSON(resp);
+        return;
+    }
+
+    LinkedHashMap<Long, Usuario> partners = new LinkedHashMap<Long, Usuario>();
+    if (yo.rol == Rol.ALUMNO) {
+        List<Inscripcion> inscripciones = Inscripcion.find("byAlumno", yo).fetch();
+        for (Inscripcion inscripcion : inscripciones) {
+            if (inscripcion != null && inscripcion.profesor != null) {
+                partners.put(inscripcion.profesor.id, inscripcion.profesor);
+            }
+        }
+    } else if (yo.rol == Rol.PROFESOR) {
+        List<Inscripcion> inscripciones = Inscripcion.find("byProfesor", yo).fetch();
+        for (Inscripcion inscripcion : inscripciones) {
+            if (inscripcion != null && inscripcion.alumno != null) {
+                partners.put(inscripcion.alumno.id, inscripcion.alumno);
+            }
+        }
+    }
+
+    List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
+    for (Usuario usuario : partners.values()) {
+        data.add(toUsuarioDto(usuario));
+    }
+
+    resp.put("status", "ok");
+    resp.put("partners", data);
+    renderJSON(resp);
+}
+
+// --- API VIDEO CONFIG ---
+public static void apiVideoConfig(Long reservaId) {
+    Reserva reserva = obtenerReservaAutorizada(reservaId);
+    if (reserva == null) return;
+
+    Map<String, Object> resp = new HashMap<String, Object>();
+    resp.put("status", "ok");
+    resp.put("turnUrls", Play.configuration.getProperty("webrtc.turn.urls"));
+    resp.put("turnUsername", Play.configuration.getProperty("webrtc.turn.username"));
+    resp.put("turnCredential", Play.configuration.getProperty("webrtc.turn.credential"));
+    Map<String, Object> reservaDto = new HashMap<String, Object>();
+    reservaDto.put("id", reserva.id);
+    reservaDto.put("codigoSala", reserva.codigoSala);
+    reservaDto.put("fechaReserva", reserva.fechaReserva != null ? reserva.fechaReserva.getTime() : null);
+    resp.put("reserva", reservaDto);
+    renderJSON(resp);
+}
+
 
 
     public static void publicarOffer(Long reservaId, String sdp, String sdp64) {
@@ -1122,6 +1855,38 @@ public static void apiLogout() {
         session.clear();
         flash.success("Has cerrado sesión correctamente.");
         index();
+    }
+
+    private static Map<String, Object> toUsuarioDto(Usuario usuario) {
+        Map<String, Object> dto = new HashMap<String, Object>();
+        if (usuario == null) {
+            return dto;
+        }
+        dto.put("id", usuario.id);
+        dto.put("username", usuario.username);
+        dto.put("fullName", usuario.fullName);
+        dto.put("rol", usuario.rol != null ? usuario.rol.toString() : null);
+        return dto;
+    }
+
+    private static Map<String, Object> toUsuarioGestionDto(Usuario usuario) {
+        Map<String, Object> dto = toUsuarioDto(usuario);
+        if (usuario != null) {
+            dto.put("email", usuario.email);
+        }
+        return dto;
+    }
+
+    private static Map<String, Object> toMateriaDto(Materia materia) {
+        Map<String, Object> dto = new HashMap<String, Object>();
+        if (materia == null) {
+            return dto;
+        }
+        dto.put("id", materia.id);
+        dto.put("codigo", materia.codigo);
+        dto.put("nombre", materia.nombre);
+        dto.put("descripcion", materia.descripcion);
+        return dto;
     }
 
     private static Map<String, Object> toMensajeDto(Mensaje mensaje) {

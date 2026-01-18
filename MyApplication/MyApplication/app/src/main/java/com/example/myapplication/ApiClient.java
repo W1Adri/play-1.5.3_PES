@@ -39,6 +39,11 @@ public final class ApiClient {
         return new ApiResponse(code, body);
     }
 
+    public static ApiResponse get(String path, Map<String, String> params) throws IOException {
+        String query = params == null || params.isEmpty() ? "" : "?" + encodeParams(params);
+        return get(path + query);
+    }
+
     public static ApiResponse postForm(String path, Map<String, String> params) throws IOException {
         URL url = new URL(BASE_URL + path);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
