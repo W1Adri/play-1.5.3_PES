@@ -4,7 +4,6 @@ import models.*;
 import play.mvc.Controller;
 import play.mvc.Before; // Importar @Before
 import play.libs.Crypto; // Importar Crypto para contraseñas
-import play.libs.JSON;
 import play.Play;
 import play.Logger;
 import org.apache.commons.codec.binary.Base64;
@@ -1478,18 +1477,37 @@ public static void apiEliminarMateria(Long id) {
     }
 
     private static String getJsonParam(String key) {
+        JsonObject cached = getCachedJsonBody();
+        if (cached == null) {
+            return null;
+        }
+        try {
+            JsonElement value = cached.get(key);
+            if (value != null && !value.isJsonNull()) {
+                return value.getAsString();
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        return null;
+    }
+
+    private static JsonObject getCachedJsonBody() {
+        Object cached = request.args.get("jsonBody");
+        if (cached instanceof JsonObject) {
+            return (JsonObject) cached;
+        }
+
         String body = readRequestBody();
         if (body == null || body.trim().isEmpty()) {
             return null;
         }
         try {
-            JsonElement element = JSON.parse(body);
+            JsonElement element = new com.google.gson.JsonParser().parse(body);
             if (element != null && element.isJsonObject()) {
                 JsonObject obj = element.getAsJsonObject();
-                JsonElement value = obj.get(key);
-                if (value != null && !value.isJsonNull()) {
-                    return value.getAsString();
-                }
+                request.args.put("jsonBody", obj);
+                return obj;
             }
         } catch (Exception e) {
             return null;
