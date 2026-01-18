@@ -30,6 +30,12 @@ public class Bootstrap extends Job {
             new Usuario("roger", passHash, "roger@uni.com", "Roger Vidal", Rol.ALUMNO).save();
         }
 
+        // --- 2b. Crear usuario admin si no existe ---
+        if (Usuario.find("byUsername", "admin").first() == null) {
+            String adminHash = Crypto.passwordHash("admin");
+            new Usuario("admin", adminHash, "admin@clases.com", "Administrador", Rol.PROFESOR).save();
+        }
+
         // --- 3. Crear Inscripción de prueba ---
 
         // Buscamos los usuarios con el tipo 'Usuario' y la sintaxis limpia
