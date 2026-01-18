@@ -161,7 +161,9 @@
     </div>
     <div class="actions">
         <a class="btn secondary" href="@{Application.consultas()}">Consultas personalizadas</a>
-        <a class="btn secondary" href="@{Application.gestion()}">Gestión académica</a>
+        #{if profesor.rol == models.Rol.ADMIN}
+            <a class="btn secondary" href="@{Application.gestion()}">Gestión académica</a>
+        #{/if}
         <a class="btn" href="@{Application.reservas()}">Reservas de clase</a>
         <a class="btn logout" href="@{Application.logout()}">Cerrar sesión</a>
     </div>
