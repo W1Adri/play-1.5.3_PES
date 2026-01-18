@@ -7,7 +7,8 @@ appcompat = "1.6.1"
 material = "1.10.0"
 activity = "1.8.0"
 constraintlayout = "2.1.4"
-webrtc = "1.0.32006"
+# CAMBIO 1: Esta es una versión válida y moderna que sí existe en Maven Central
+webrtc = "114.5735.07"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -17,7 +18,8 @@ appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "a
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
-webrtc = { group = "org.webrtc", name = "google-webrtc", version.ref = "webrtc" }
+# CAMBIO 2: Cambiamos 'org.webrtc' por 'io.github.webrtc-sdk' para que lo descargue del sitio correcto
+webrtc = { group = "io.github.webrtc-sdk", name = "android", version.ref = "webrtc" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
