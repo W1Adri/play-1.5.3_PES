@@ -14,12 +14,31 @@ public class AlumnoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alumno);
 
+        String userId = getIntent().getStringExtra("userId");
         String username = getIntent().getStringExtra("username");
         String fullName = getIntent().getStringExtra("fullName");
         String rol = getIntent().getStringExtra("rol");
 
         TextView info = findViewById(R.id.txtAlumnoInfo);
+        TextView sub = findViewById(R.id.txtSub);
         info.setText(fullName + " (" + username + ")\nRol: " + rol);
+        sub.setText("Bienvenido/a · sincronizando perfil...");
+
+        new Thread(() -> {
+            try {
+                ApiClient.ApiResponse response = ApiClient.get("/api/me");
+                org.json.JSONObject json = ApiClient.parseJson(response.body);
+                if (response.code >= 200 && response.code < 300 && json != null
+                        && "ok".equalsIgnoreCase(json.optString("status"))) {
+                    String name = json.optJSONObject("user").optString("fullName", fullName);
+                    runOnUiThread(() -> sub.setText("Bienvenido/a · " + name));
+                } else {
+                    runOnUiThread(() -> sub.setText("Bienvenido/a · perfil no disponible"));
+                }
+            } catch (Exception e) {
+                runOnUiThread(() -> sub.setText("Bienvenido/a · sin conexión"));
+            }
+        }).start();
 
         Button btnMaterias = findViewById(R.id.btnMaterias);
         Button btnMisInscripciones = findViewById(R.id.btnMisInscripciones);
@@ -50,10 +69,17 @@ public class AlumnoActivity extends AppCompatActivity {
             Intent i = new Intent(this, ChatActivity.class);
             i.putExtra("rol", rol);
             i.putExtra("username", username);
+            i.putExtra("userId", userId);
             startActivity(i);
         });
 
         btnLogout.setOnClickListener(v -> {
+            new Thread(() -> {
+                try {
+                    ApiClient.postForm("/api/logout", new java.util.HashMap<>());
+                } catch (Exception ignored) {
+                }
+            }).start();
             Intent i = new Intent(AlumnoActivity.this, MainActivity.class);
             i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(i);

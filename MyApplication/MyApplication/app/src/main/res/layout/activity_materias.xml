@@ -3,7 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="18dp">
+    android:padding="18dp"
+    android:background="@drawable/bg_gradient_blue">
 
     <TextView
         android:id="@+id/txtTitle"
@@ -11,19 +12,23 @@
         android:layout_height="wrap_content"
         android:text="Materias"
         android:textStyle="bold"
-        android:textSize="24sp" />
+        android:textSize="24sp"
+        android:textColor="@color/brand_text_primary" />
 
     <TextView
         android:id="@+id/txtSub"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Lista de materias (mock)"
-        android:layout_marginTop="6dp" />
+        android:layout_marginTop="6dp"
+        android:textColor="@color/brand_text_secondary" />
     <Button
         android:id="@+id/btnBack"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="← Volver" />
+        android:text="← Volver"
+        android:textColor="@color/brand_primary"
+        android:background="@drawable/button_secondary" />
 
     <ListView
         android:id="@+id/listMaterias"

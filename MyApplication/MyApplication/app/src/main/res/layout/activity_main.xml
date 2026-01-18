@@ -3,13 +3,24 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="20dp">
+    android:padding="20dp"
+    android:background="@drawable/bg_gradient_blue">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="LOGIN"
         android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@color/brand_text_primary"
+        android:layout_marginBottom="6dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Accede a tu panel académico"
+        android:textColor="@color/brand_text_secondary"
+        android:textSize="14sp"
         android:layout_marginBottom="16dp"/>
 
     <EditText
@@ -17,7 +28,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Usuario"
-        android:inputType="textPersonName" />
+        android:inputType="textPersonName"
+        android:background="@drawable/input_background" />
 
     <EditText
         android:id="@+id/edtPass"
@@ -25,6 +37,7 @@
         android:layout_height="wrap_content"
         android:hint="Password"
         android:inputType="textPassword"
+        android:background="@drawable/input_background"
         android:layout_marginTop="12dp"/>
 
     <Button
@@ -32,12 +45,33 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="LOGIN"
+        android:textColor="@color/white"
+        android:background="@drawable/button_primary"
         android:layout_marginTop="16dp"/>
+
+    <Button
+        android:id="@+id/btnRegister"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Crear cuenta"
+        android:textColor="@color/brand_primary"
+        android:background="@drawable/button_secondary"
+        android:layout_marginTop="10dp"/>
+
+    <Button
+        android:id="@+id/btnPing"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Comprobar servidor"
+        android:textColor="@color/brand_primary"
+        android:background="@drawable/button_secondary"
+        android:layout_marginTop="10dp"/>
 
     <TextView
         android:id="@+id/txtResult"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
+        android:textColor="@color/brand_text_secondary"
         android:layout_marginTop="16dp"/>
 </LinearLayout>
