@@ -1477,6 +1477,27 @@ public static void apiEliminarMateria(Long id) {
     }
 
     private static String getJsonParam(String key) {
+        JsonObject cached = getCachedJsonBody();
+        if (cached == null) {
+            return null;
+        }
+        try {
+            JsonElement value = cached.get(key);
+            if (value != null && !value.isJsonNull()) {
+                return value.getAsString();
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        return null;
+    }
+
+    private static JsonObject getCachedJsonBody() {
+        Object cached = request.args.get("jsonBody");
+        if (cached instanceof JsonObject) {
+            return (JsonObject) cached;
+        }
+
         String body = readRequestBody();
         if (body == null || body.trim().isEmpty()) {
             return null;
@@ -1485,10 +1506,8 @@ public static void apiEliminarMateria(Long id) {
             JsonElement element = new com.google.gson.JsonParser().parse(body);
             if (element != null && element.isJsonObject()) {
                 JsonObject obj = element.getAsJsonObject();
-                JsonElement value = obj.get(key);
-                if (value != null && !value.isJsonNull()) {
-                    return value.getAsString();
-                }
+                request.args.put("jsonBody", obj);
+                return obj;
             }
         } catch (Exception e) {
             return null;
