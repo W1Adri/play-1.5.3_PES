@@ -537,6 +537,16 @@ public static void apiPing() {
 }
 
 // --- API REGISTER ---
+/**
+ * Endpoint para registro vía API (usado por la aplicación Android).
+ * 
+ * Acepta datos en formato JSON:
+ * POST /api/register
+ * Content-Type: application/json
+ * {"username": "user", "password": "pass", "email": "user@example.com", "fullName": "Full Name", "rol": "alumno"}
+ * 
+ * Retorna JSON con status "ok" o "error" y el userId si el registro es exitoso.
+ */
 public static void apiRegister(String username, String password, String email, String fullName, String rol) {
     Map<String, Object> resp = new HashMap<String, Object>();
 
@@ -591,6 +601,21 @@ public static void apiRegister(String username, String password, String email, S
 }
 
 // --- API LOGIN ---
+/**
+ * Endpoint para login vía API (usado por la aplicación Android).
+ * 
+ * Acepta credenciales en formato JSON:
+ * POST /api/login
+ * Content-Type: application/json
+ * {"username": "user", "password": "pass"}
+ * 
+ * O en formato form-urlencoded:
+ * POST /api/login
+ * Content-Type: application/x-www-form-urlencoded
+ * username=user&password=pass
+ * 
+ * Retorna JSON con status "ok" o "error" y los datos del usuario si el login es exitoso.
+ */
 public static void apiLogin(String username, String password) {
     Map<String, Object> resp = new HashMap<String, Object>();
 
@@ -1475,6 +1500,15 @@ public static void apiEliminarMateria(Long id) {
         return new String[] { resolvedSdp, resolvedSdp64 };
     }
 
+    /**
+     * Lee el cuerpo de la petición HTTP.
+     * 
+     * IMPORTANTE: En Play Framework 1.x, cuando el Content-Type es "application/json",
+     * el TextParser consume el InputStream request.body y guarda el contenido en
+     * params.get("body"). Por lo tanto, debemos leer desde params primero.
+     * 
+     * @return El contenido del body como String, o null si no está disponible
+     */
     private static String readRequestBody() {
         try {
             // En Play Framework 1.x, el TextParser ya ha leido el body y lo guarda en params.get("body")
