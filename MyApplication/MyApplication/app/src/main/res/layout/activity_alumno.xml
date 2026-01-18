@@ -100,6 +100,15 @@
             android:layout_marginTop="10dp" />
 
         <Button
+            android:id="@+id/btnConsultas"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📊 Consultas personalizadas"
+            android:textColor="@color/brand_primary"
+            android:background="@drawable/button_secondary"
+            android:layout_marginTop="10dp" />
+
+        <Button
             android:id="@+id/btnLogout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

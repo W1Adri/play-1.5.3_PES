@@ -45,6 +45,7 @@ public class AlumnoActivity extends AppCompatActivity {
         Button btnMisInscripciones = findViewById(R.id.btnMisInscripciones);
         Button btnReservas = findViewById(R.id.btnReservas);
         Button btnChat = findViewById(R.id.btnChat);
+        Button btnConsultas = findViewById(R.id.btnConsultas);
         Button btnMenu = findViewById(R.id.btnMenu);
         Button btnLogout = findViewById(R.id.btnLogout);
 
@@ -72,6 +73,11 @@ public class AlumnoActivity extends AppCompatActivity {
             i.putExtra("rol", rol);
             i.putExtra("username", username);
             i.putExtra("userId", userId);
+            startActivity(i);
+        });
+
+        btnConsultas.setOnClickListener(v -> {
+            Intent i = new Intent(this, ConsultasActivity.class);
             startActivity(i);
         });
 

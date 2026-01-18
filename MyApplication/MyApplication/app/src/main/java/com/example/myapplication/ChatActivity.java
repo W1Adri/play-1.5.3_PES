@@ -8,6 +8,9 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
 
 
@@ -21,12 +24,33 @@ import java.util.LinkedHashMap;
 
 public class ChatActivity extends AppCompatActivity {
 
-    private ArrayList<String> mensajes;
-    private ArrayAdapter<String> adapter;
+    private static class Message {
+        final long id;
+        final String sender;
+        final String content;
+        final String timestamp;
+
+        Message(long id, String sender, String content, String timestamp) {
+            this.id = id;
+            this.sender = sender;
+            this.content = content;
+            this.timestamp = timestamp;
+        }
+
+        @Override
+        public String toString() {
+            return sender + " (" + timestamp + "): " + content;
+        }
+    }
+
+    private ArrayList<Message> mensajes;
+    private ArrayAdapter<Message> adapter;
     private String alumnoId;
     private String profesorId;
     private String rol;
     private long lastMessageId = 0L;
+    private Thread pollingThread;
+    private volatile boolean isPolling = false;
 
     private static class ChatTarget {
         final String id;
@@ -82,10 +106,14 @@ public class ChatActivity extends AppCompatActivity {
                         String emisor = json.optJSONObject("emisor").optString("username", username == null ? "Yo" : username);
                         String contenido = json.optString("contenido", text);
                         long msgId = json.optLong("id", 0L);
+                        String fecha = json.optString("fecha", "");
+                        String formattedTime = formatTimestamp(fecha);
                         runOnUiThread(() -> {
-                            mensajes.add(emisor + ": " + contenido);
+                            mensajes.add(new Message(msgId, emisor, contenido, formattedTime));
                             adapter.notifyDataSetChanged();
                             edt.setText("");
+                            ListView list = findViewById(R.id.listChat);
+                            list.smoothScrollToPosition(mensajes.size() - 1);
                         });
                         if (msgId > lastMessageId) {
                             lastMessageId = msgId;
@@ -100,6 +128,52 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         cargarChatsDisponibles(userId);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopPolling();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopPolling();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (alumnoId != null && profesorId != null) {
+            startPolling();
+        }
+    }
+
+    private void startPolling() {
+        if (isPolling) return;
+        isPolling = true;
+        pollingThread = new Thread(() -> {
+            while (isPolling) {
+                try {
+                    cargarMensajes();
+                    Thread.sleep(3000); // Poll every 3 seconds like web app
+                } catch (InterruptedException e) {
+                    break;
+                } catch (Exception e) {
+                    // Continue polling even if there's an error
+                }
+            }
+        });
+        pollingThread.start();
+    }
+
+    private void stopPolling() {
+        isPolling = false;
+        if (pollingThread != null) {
+            pollingThread.interrupt();
+            pollingThread = null;
+        }
     }
 
     private void cargarChatsDisponibles(String userId) {
@@ -173,6 +247,7 @@ public class ChatActivity extends AppCompatActivity {
         mensajes.clear();
         adapter.notifyDataSetChanged();
         cargarMensajes();
+        startPolling(); // Start automatic polling
     }
 
     private void cargarMensajes() {
@@ -186,7 +261,7 @@ public class ChatActivity extends AppCompatActivity {
                 ApiClient.ApiResponse response = ApiClient.get(path);
                 JSONArray json = ApiClient.parseJsonArray(response.body);
                 if (response.code >= 200 && response.code < 300 && json != null) {
-                    ArrayList<String> nuevos = new ArrayList<>();
+                    ArrayList<Message> nuevos = new ArrayList<>();
                     long maxId = lastMessageId;
                     for (int i = 0; i < json.length(); i++) {
                         JSONObject msg = json.optJSONObject(i);
@@ -194,19 +269,39 @@ public class ChatActivity extends AppCompatActivity {
                         String emisor = msg.optJSONObject("emisor").optString("username", "Usuario");
                         String contenido = msg.optString("contenido", "");
                         long msgId = msg.optLong("id", 0L);
-                        nuevos.add(emisor + ": " + contenido);
+                        String fecha = msg.optString("fecha", "");
+                        String formattedTime = formatTimestamp(fecha);
+                        nuevos.add(new Message(msgId, emisor, contenido, formattedTime));
                         if (msgId > maxId) maxId = msgId;
                     }
                     long finalMaxId = maxId;
                     runOnUiThread(() -> {
+                        int oldSize = mensajes.size();
                         mensajes.addAll(nuevos);
                         adapter.notifyDataSetChanged();
                         lastMessageId = finalMaxId;
+                        if (nuevos.size() > 0 && oldSize > 0) {
+                            ListView list = findViewById(R.id.listChat);
+                            list.smoothScrollToPosition(mensajes.size() - 1);
+                        }
                     });
                 }
             } catch (Exception e) {
-                runOnUiThread(() -> Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                // Silently fail during polling to avoid spamming user with errors
             }
         }).start();
+    }
+
+    private String formatTimestamp(String fecha) {
+        if (fecha == null || fecha.isEmpty()) return "";
+        try {
+            SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
+            Date date = inputFormat.parse(fecha);
+            if (date == null) return "";
+            SimpleDateFormat outputFormat = new SimpleDateFormat("dd/MM HH:mm", Locale.getDefault());
+            return outputFormat.format(date);
+        } catch (Exception e) {
+            return "";
+        }
     }
 }

@@ -52,6 +52,11 @@ public class VideoCallActivity extends AppCompatActivity {
     private String reservaId;
     private String rol;
     private volatile boolean running = true;
+    private Button btnHangup;
+    private Button btnToggleAudio;
+    private Button btnToggleVideo;
+    private boolean isAudioEnabled = true;
+    private boolean isVideoEnabled = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,8 +68,27 @@ public class VideoCallActivity extends AppCompatActivity {
 
         localRenderer = findViewById(R.id.localRenderer);
         remoteRenderer = findViewById(R.id.remoteRenderer);
-        Button btnHangup = findViewById(R.id.btnHangup);
+        btnHangup = findViewById(R.id.btnHangup);
+        btnToggleAudio = findViewById(R.id.btnToggleAudio);
+        btnToggleVideo = findViewById(R.id.btnToggleVideo);
+        
         btnHangup.setOnClickListener(v -> finish());
+        
+        btnToggleAudio.setOnClickListener(v -> {
+            isAudioEnabled = !isAudioEnabled;
+            if (localAudioTrack != null) {
+                localAudioTrack.setEnabled(isAudioEnabled);
+            }
+            btnToggleAudio.setText(isAudioEnabled ? "🔊 Audio" : "🔇 Mute");
+        });
+        
+        btnToggleVideo.setOnClickListener(v -> {
+            isVideoEnabled = !isVideoEnabled;
+            if (localVideoTrack != null) {
+                localVideoTrack.setEnabled(isVideoEnabled);
+            }
+            btnToggleVideo.setText(isVideoEnabled ? "📹 Video" : "📷 Video Off");
+        });
 
         if (hasPermissions()) {
             initWebRtc();
@@ -166,17 +190,41 @@ public class VideoCallActivity extends AppCompatActivity {
         peerConnection = factory.createPeerConnection(config, new PeerConnection.Observer() {
             @Override
             public void onIceCandidate(IceCandidate iceCandidate) {
+                // In a production app, you would send this to the remote peer
+                // For now, we're using trickle ICE which is handled by the SDP exchange
             }
 
             @Override
             public void onAddStream(MediaStream mediaStream) {
-                if (mediaStream.videoTracks.size() > 0) {
-                    mediaStream.videoTracks.get(0).addSink(remoteRenderer);
-                }
+                runOnUiThread(() -> {
+                    if (mediaStream.videoTracks.size() > 0) {
+                        mediaStream.videoTracks.get(0).addSink(remoteRenderer);
+                    }
+                });
             }
 
-            @Override public void onSignalingChange(PeerConnection.SignalingState signalingState) { }
-            @Override public void onIceConnectionChange(PeerConnection.IceConnectionState iceConnectionState) { }
+            @Override 
+            public void onSignalingChange(PeerConnection.SignalingState signalingState) {
+                runOnUiThread(() -> {
+                    if (signalingState == PeerConnection.SignalingState.STABLE) {
+                        Toast.makeText(VideoCallActivity.this, "Conexión establecida", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+            
+            @Override 
+            public void onIceConnectionChange(PeerConnection.IceConnectionState iceConnectionState) {
+                runOnUiThread(() -> {
+                    if (iceConnectionState == PeerConnection.IceConnectionState.CONNECTED) {
+                        Toast.makeText(VideoCallActivity.this, "Video conectado", Toast.LENGTH_SHORT).show();
+                    } else if (iceConnectionState == PeerConnection.IceConnectionState.DISCONNECTED) {
+                        Toast.makeText(VideoCallActivity.this, "Desconectado", Toast.LENGTH_SHORT).show();
+                    } else if (iceConnectionState == PeerConnection.IceConnectionState.FAILED) {
+                        Toast.makeText(VideoCallActivity.this, "Error de conexión", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+            
             @Override public void onIceConnectionReceivingChange(boolean b) { }
             @Override public void onIceGatheringChange(PeerConnection.IceGatheringState iceGatheringState) { }
             @Override public void onIceCandidatesRemoved(IceCandidate[] iceCandidates) { }
@@ -202,30 +250,65 @@ public class VideoCallActivity extends AppCompatActivity {
         peerConnection.createOffer(new SimpleSdpObserver() {
             @Override
             public void onCreateSuccess(SessionDescription sessionDescription) {
-                peerConnection.setLocalDescription(new SimpleSdpObserver(), sessionDescription);
-                publicarSdp("/reservas/" + reservaId + "/offer", sessionDescription);
-                esperarAnswer();
+                peerConnection.setLocalDescription(new SimpleSdpObserver() {
+                    @Override
+                    public void onSetSuccess() {
+                        publicarSdp("/reservas/" + reservaId + "/offer", sessionDescription);
+                        esperarAnswer();
+                    }
+                    
+                    @Override
+                    public void onSetFailure(String error) {
+                        runOnUiThread(() -> Toast.makeText(VideoCallActivity.this, 
+                            "Error configurando oferta: " + error, Toast.LENGTH_SHORT).show());
+                    }
+                }, sessionDescription);
+            }
+            
+            @Override
+            public void onCreateFailure(String error) {
+                runOnUiThread(() -> Toast.makeText(VideoCallActivity.this, 
+                    "Error creando oferta: " + error, Toast.LENGTH_SHORT).show());
             }
         }, constraints);
     }
 
     private void esperarOfferYResponder() {
+        runOnUiThread(() -> Toast.makeText(this, "Esperando oferta del profesor...", Toast.LENGTH_SHORT).show());
         new Thread(() -> {
-            while (running) {
+            int intentos = 0;
+            while (running && intentos < 60) { // Timeout after 90 seconds (60 * 1.5s)
                 try {
                     ApiClient.ApiResponse response = ApiClient.get("/reservas/" + reservaId + "/offer");
                     JSONObject json = ApiClient.parseJson(response.body);
                     if (response.code >= 200 && response.code < 300 && json != null && json.optString("sdp", "").length() > 0) {
                         String sdp = json.optString("sdp", "");
                         SessionDescription offer = new SessionDescription(SessionDescription.Type.OFFER, sdp);
-                        peerConnection.setRemoteDescription(new SimpleSdpObserver(), offer);
-                        crearAnswer();
+                        peerConnection.setRemoteDescription(new SimpleSdpObserver() {
+                            @Override
+                            public void onSetSuccess() {
+                                crearAnswer();
+                            }
+                            
+                            @Override
+                            public void onSetFailure(String error) {
+                                runOnUiThread(() -> Toast.makeText(VideoCallActivity.this, 
+                                    "Error procesando oferta: " + error, Toast.LENGTH_SHORT).show());
+                            }
+                        }, offer);
                         return;
                     }
+                    intentos++;
                     Thread.sleep(1500);
                 } catch (Exception e) {
                     break;
                 }
+            }
+            if (intentos >= 60) {
+                runOnUiThread(() -> {
+                    Toast.makeText(VideoCallActivity.this, "Timeout esperando oferta", Toast.LENGTH_LONG).show();
+                    finish();
+                });
             }
         }).start();
     }
@@ -235,28 +318,65 @@ public class VideoCallActivity extends AppCompatActivity {
         peerConnection.createAnswer(new SimpleSdpObserver() {
             @Override
             public void onCreateSuccess(SessionDescription sessionDescription) {
-                peerConnection.setLocalDescription(new SimpleSdpObserver(), sessionDescription);
-                publicarSdp("/reservas/" + reservaId + "/answer", sessionDescription);
+                peerConnection.setLocalDescription(new SimpleSdpObserver() {
+                    @Override
+                    public void onSetSuccess() {
+                        publicarSdp("/reservas/" + reservaId + "/answer", sessionDescription);
+                    }
+                    
+                    @Override
+                    public void onSetFailure(String error) {
+                        runOnUiThread(() -> Toast.makeText(VideoCallActivity.this, 
+                            "Error configurando respuesta: " + error, Toast.LENGTH_SHORT).show());
+                    }
+                }, sessionDescription);
+            }
+            
+            @Override
+            public void onCreateFailure(String error) {
+                runOnUiThread(() -> Toast.makeText(VideoCallActivity.this, 
+                    "Error creando respuesta: " + error, Toast.LENGTH_SHORT).show());
             }
         }, constraints);
     }
 
     private void esperarAnswer() {
+        runOnUiThread(() -> Toast.makeText(this, "Esperando respuesta del alumno...", Toast.LENGTH_SHORT).show());
         new Thread(() -> {
-            while (running) {
+            int intentos = 0;
+            while (running && intentos < 60) { // Timeout after 90 seconds
                 try {
                     ApiClient.ApiResponse response = ApiClient.get("/reservas/" + reservaId + "/answer");
                     JSONObject json = ApiClient.parseJson(response.body);
                     if (response.code >= 200 && response.code < 300 && json != null && json.optString("sdp", "").length() > 0) {
                         String sdp = json.optString("sdp", "");
                         SessionDescription answer = new SessionDescription(SessionDescription.Type.ANSWER, sdp);
-                        peerConnection.setRemoteDescription(new SimpleSdpObserver(), answer);
+                        peerConnection.setRemoteDescription(new SimpleSdpObserver() {
+                            @Override
+                            public void onSetSuccess() {
+                                runOnUiThread(() -> Toast.makeText(VideoCallActivity.this, 
+                                    "Estableciendo conexión...", Toast.LENGTH_SHORT).show());
+                            }
+                            
+                            @Override
+                            public void onSetFailure(String error) {
+                                runOnUiThread(() -> Toast.makeText(VideoCallActivity.this, 
+                                    "Error procesando respuesta: " + error, Toast.LENGTH_SHORT).show());
+                            }
+                        }, answer);
                         return;
                     }
+                    intentos++;
                     Thread.sleep(1500);
                 } catch (Exception e) {
                     break;
                 }
+            }
+            if (intentos >= 60) {
+                runOnUiThread(() -> {
+                    Toast.makeText(VideoCallActivity.this, "Timeout esperando respuesta", Toast.LENGTH_LONG).show();
+                    finish();
+                });
             }
         }).start();
     }

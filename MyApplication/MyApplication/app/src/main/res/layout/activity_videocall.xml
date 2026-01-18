@@ -23,13 +23,32 @@
         android:layout_alignParentBottom="true"
         android:gravity="center"
         android:orientation="horizontal"
-        android:padding="16dp">
+        android:padding="16dp"
+        android:background="#AA000000">
+
+        <Button
+            android:id="@+id/btnToggleAudio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔊 Audio"
+            android:textColor="@color/white"
+            android:background="@drawable/button_secondary"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/btnToggleVideo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📹 Video"
+            android:textColor="@color/white"
+            android:background="@drawable/button_secondary"
+            android:layout_marginEnd="8dp" />
 
         <Button
             android:id="@+id/btnHangup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Colgar"
+            android:text="📞 Colgar"
             android:textColor="@color/white"
             android:background="@drawable/button_danger" />
     </LinearLayout>
