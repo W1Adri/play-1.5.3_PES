@@ -3,7 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="18dp">
+    android:padding="18dp"
+    android:background="@drawable/bg_gradient_blue">
 
     <TextView
         android:id="@+id/txtTitle"
@@ -11,14 +12,16 @@
         android:layout_height="wrap_content"
         android:text="Chat"
         android:textStyle="bold"
-        android:textSize="24sp" />
+        android:textSize="24sp"
+        android:textColor="@color/brand_text_primary" />
 
     <TextView
         android:id="@+id/txtSub"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Conversación (mock)"
-        android:layout_marginTop="6dp" />
+        android:layout_marginTop="6dp"
+        android:textColor="@color/brand_text_secondary" />
 
     <ListView
         android:id="@+id/listChat"
@@ -38,17 +41,22 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Escribe un mensaje..." />
+            android:hint="Escribe un mensaje..."
+            android:background="@drawable/input_background" />
         <Button
             android:id="@+id/btnBack"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="← Volver" />
+            android:text="← Volver"
+            android:textColor="@color/brand_primary"
+            android:background="@drawable/button_secondary" />
 
         <Button
             android:id="@+id/btnSend"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Enviar" />
+            android:text="Enviar"
+            android:textColor="@color/white"
+            android:background="@drawable/button_primary" />
     </LinearLayout>
 </LinearLayout>

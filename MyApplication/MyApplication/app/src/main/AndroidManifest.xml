@@ -21,6 +21,7 @@
         <activity android:name=".MateriasActivity" />
         <activity android:name=".AlumnoActivity" />
         <activity android:name=".ProfesorActivity" />
+        <activity android:name=".RegisterActivity" />
 
         <activity
             android:name=".MainActivity"
