@@ -1482,7 +1482,7 @@ public static void apiEliminarMateria(Long id) {
             return null;
         }
         try {
-            JsonElement element = com.google.gson.JsonParser.parseString(body);
+            JsonElement element = new com.google.gson.JsonParser().parse(body);
             if (element != null && element.isJsonObject()) {
                 JsonObject obj = element.getAsJsonObject();
                 JsonElement value = obj.get(key);
