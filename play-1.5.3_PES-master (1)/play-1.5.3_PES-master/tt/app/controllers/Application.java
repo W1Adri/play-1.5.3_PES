@@ -4,7 +4,6 @@ import models.*;
 import play.mvc.Controller;
 import play.mvc.Before; // Importar @Before
 import play.libs.Crypto; // Importar Crypto para contraseñas
-import play.libs.JSON;
 import play.Play;
 import play.Logger;
 import org.apache.commons.codec.binary.Base64;
@@ -595,20 +594,20 @@ public static void apiRegister(String username, String password, String email, S
 public static void apiLogin(String username, String password) {
     Map<String, Object> resp = new HashMap<String, Object>();
 
-    if (username == null) username = getJsonParam("username");
-    if (password == null) password = getJsonParam("password");
+    String resolvedUsername = getParamValue("username", username);
+    String resolvedPassword = getParamValue("password", password);
 
-    if (username == null || password == null) {
+    if (isBlank(resolvedUsername) || isBlank(resolvedPassword)) {
         resp.put("status", "error");
         resp.put("msg", "Faltan credenciales");
         renderJSON(resp);
         return;
     }
 
-    username = username.trim().toLowerCase();
-    String passwordHash = Crypto.passwordHash(password);
+    resolvedUsername = resolvedUsername.trim().toLowerCase();
+    String passwordHash = Crypto.passwordHash(resolvedPassword);
 
-    Usuario u = Usuario.find("byUsernameAndPasswordHash", username, passwordHash).first();
+    Usuario u = Usuario.find("byUsernameAndPasswordHash", resolvedUsername, passwordHash).first();
 
     if (u == null) {
         resp.put("status", "error");
@@ -1478,18 +1477,52 @@ public static void apiEliminarMateria(Long id) {
     }
 
     private static String getJsonParam(String key) {
+        JsonObject cached = getCachedJsonBody();
+        if (cached == null) {
+            return null;
+        }
+        try {
+            JsonElement value = cached.get(key);
+            if (value != null && !value.isJsonNull()) {
+                return value.getAsString();
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        return null;
+    }
+
+    private static String getParamValue(String key, String current) {
+        if (!isBlank(current)) {
+            return current;
+        }
+        String fromParams = request.params.get(key);
+        if (!isBlank(fromParams)) {
+            return fromParams;
+        }
+        return getJsonParam(key);
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private static JsonObject getCachedJsonBody() {
+        Object cached = request.args.get("jsonBody");
+        if (cached instanceof JsonObject) {
+            return (JsonObject) cached;
+        }
+
         String body = readRequestBody();
         if (body == null || body.trim().isEmpty()) {
             return null;
         }
         try {
-            JsonElement element = JSON.parse(body);
+            JsonElement element = new com.google.gson.JsonParser().parse(body);
             if (element != null && element.isJsonObject()) {
                 JsonObject obj = element.getAsJsonObject();
-                JsonElement value = obj.get(key);
-                if (value != null && !value.isJsonNull()) {
-                    return value.getAsString();
-                }
+                request.args.put("jsonBody", obj);
+                return obj;
             }
         } catch (Exception e) {
             return null;
